@@ -1,1 +1,9 @@
 
+## How to see live demo without deploy for testing 
+
+1. enable developer setting in farcaster 
+
+2. 1st terminal -> npm run dev
+2nd terminal -> cloudflared tunnel --url http://localhost:5173
+Copy the url → paste into Farcaster debug tool
+
