@@ -1,0 +1,142 @@
+/* Provider Grid Styles */
+.provider-grid-container {
+  width: 100%;
+}
+
+.provider-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.provider-header h2 {
+  margin-bottom: var(--spacing-sm);
+}
+
+.provider-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--spacing-md);
+}
+
+.provider-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  text-align: left;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.provider-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.provider-card:hover::before {
+  opacity: 0.08;
+}
+
+.provider-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(245, 158, 11, 0.15);
+}
+
+.provider-card:hover .provider-arrow {
+  transform: translateX(4px);
+}
+
+.provider-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-md);
+  position: relative;
+  z-index: 1;
+}
+
+.provider-content {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.provider-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.provider-description {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.provider-arrow {
+  font-size: 1.25rem;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-normal);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .provider-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: var(--spacing-sm);
+  }
+  
+  .provider-card {
+    padding: var(--spacing-md);
+  }
+  
+  .provider-icon {
+    font-size: 1.75rem;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .provider-label {
+    font-size: 1rem;
+  }
+  
+  .provider-description {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .provider-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .provider-card {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+}
