@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "1765788366134",
+    "userId": "1765788366133",
+    "points": 10,
+    "reason": "wallet_connect",
+    "createdAt": "2025-12-15T08:46:06.134Z"
+  },
+  {
+    "id": "1765788366451",
+    "userId": "1765788366133",
+    "points": 20,
+    "reason": "data_contribution",
+    "createdAt": "2025-12-15T08:46:06.451Z"
+  },
+  {
+    "id": "1765788442644",
+    "userId": "1765788366133",
+    "points": 20,
+    "reason": "data_contribution",
+    "createdAt": "2025-12-15T08:47:22.644Z"
+  }
+]

@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": "1765788366133",
+    "privyId": "0x5AADE8727AeC298355FfB7CDC7d8fC330fb33388",
+    "email": "user",
+    "walletAddress": "0x5AADE8727AeC298355FfB7CDC7d8fC330fb33388",
+    "username": null,
+    "streak": 0,
+    "lastContributionDate": "2025-12-15T08:47:22.648Z",
+    "totalPoints": 50,
+    "league": "Silver",
+    "createdAt": "2025-12-15T08:46:06.133Z",
+    "lastActiveAt": "2025-12-15T08:47:22.651Z"
+  }
+]

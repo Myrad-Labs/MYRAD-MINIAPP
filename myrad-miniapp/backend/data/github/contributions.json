@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "1765788442643",
+    "userId": "1765788366133",
+    "data": {
+      "username": "theteatoast",
+      "followers": 5,
+      "contributions": 182,
+      "accountAgeYears": null
+    },
+    "sellableData": {
+      "schema_version": "1.0",
+      "dataset_id": "myrad_github_v1",
+      "record_type": "developer_profile",
+      "generated_at": "2025-12-15T08:47:22.643Z",
+      "developer_profile": {
+        "account_age_years": null,
+        "creation_year": null,
+        "tier": "intermediate",
+        "has_username": true
+      },
+      "social_metrics": {
+        "follower_tier": "starter",
+        "follower_count_range": "0-9",
+        "is_influencer": false
+      },
+      "activity_metrics": {
+        "yearly_contributions": 182,
+        "contribution_tier": "regular",
+        "is_active_contributor": true,
+        "activity_level": "weekly_contributor"
+      },
+      "audience_segment": {
+        "segment_id": "github_intermediate_regular",
+        "dmp_attributes": {
+          "interest_software_development": true,
+          "interest_open_source": true,
+          "profession_developer": true,
+          "engagement_level": "weekly_contributor"
+        }
+      },
+      "metadata": {
+        "source": "reclaim_protocol",
+        "schema_standard": "myrad_developer_intelligence_v1",
+        "verification": {
+          "status": "zk_verified",
+          "proof_type": "zero_knowledge",
+          "attestor": "reclaim_network"
+        },
+        "privacy_compliance": {
+          "pii_stripped": false,
+          "username_hashed": false,
+          "gdpr_compatible": true,
+          "ccpa_compatible": true,
+          "k_anonymity_compliant": false,
+          "cohort_size": 1,
+          "aggregation_status": "pending_more_contributors"
+        },
+        "data_quality": {
+          "score": 75,
+          "completeness": "3/4"
+        }
+      }
+    },
+    "behavioralInsights": null,
+    "dataType": "github_profile",
+    "reclaimProofId": "0x19009a8f12f3dfa744294f4d483a95db1f7b6c2095ccf4db75ca1402bba9201f",
+    "processingMethod": "enterprise_pipeline",
+    "status": "verified",
+    "createdAt": "2025-12-15T08:47:22.643Z"
+  }
+]

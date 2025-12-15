@@ -325,8 +325,14 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
         // ========================================
         // COMPUTE DATA SIZE FOR REWARDS
         // ========================================
-        const orderCount = sellableData?.transaction_data?.summary?.total_orders || 0;
-        const githubContributions = sellableData?.activity_metrics?.yearly_contributions || 0;
+        // Check processed sellableData first, fall back to raw data
+        const orderCount = sellableData?.transaction_data?.summary?.total_orders
+            || anonymizedData?.orders?.length
+            || 0;
+        const githubContributions = sellableData?.activity_metrics?.yearly_contributions
+            || parseInt(anonymizedData?.contributionsLastYear || '0', 10);
+
+        console.log(`📊 Order count: ${orderCount}, GitHub contributions: ${githubContributions}`);
 
         // Determine if large data (Zomato: >10 orders, GitHub: >50 contributions)
         let isLargeData = false;
