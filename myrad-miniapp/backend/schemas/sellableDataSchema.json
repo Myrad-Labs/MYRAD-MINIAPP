@@ -1,0 +1,590 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "myrad_sellable_data_v2",
+    "title": "MYRAD Sellable Data Schema",
+    "description": "JSON Schema for validating consumer intelligence profiles",
+    "type": "object",
+    "required": [
+        "schema_version",
+        "dataset_id",
+        "record_type",
+        "generated_at",
+        "audience_segment",
+        "transaction_data",
+        "metadata"
+    ],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+$",
+            "description": "Schema version (e.g., 2.0)"
+        },
+        "dataset_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unique dataset identifier"
+        },
+        "record_type": {
+            "type": "string",
+            "enum": [
+                "consumer_behavior_profile"
+            ],
+            "description": "Type of record"
+        },
+        "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of generation"
+        },
+        "audience_segment": {
+            "type": "object",
+            "required": [
+                "segment_id",
+                "iab_categories",
+                "dmp_attributes"
+            ],
+            "properties": {
+                "segment_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Cohort/segment identifier"
+                },
+                "iab_categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "IAB taxonomy categories"
+                },
+                "dmp_attributes": {
+                    "type": "object",
+                    "required": [
+                        "interest_food_delivery",
+                        "lifestyle_segment"
+                    ],
+                    "properties": {
+                        "interest_food_delivery": {
+                            "type": "boolean"
+                        },
+                        "interest_dining_out": {
+                            "type": "boolean"
+                        },
+                        "interest_cuisine_types": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "lifestyle_segment": {
+                            "type": "string",
+                            "enum": [
+                                "affluent",
+                                "upper_middle",
+                                "middle_class",
+                                "value_conscious"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "transaction_data": {
+            "type": "object",
+            "required": [
+                "summary",
+                "frequency_metrics",
+                "recency"
+            ],
+            "properties": {
+                "summary": {
+                    "type": "object",
+                    "required": [
+                        "total_orders",
+                        "total_gmv",
+                        "avg_order_value",
+                        "currency"
+                    ],
+                    "properties": {
+                        "total_orders": {
+                            "type": "integer",
+                            "minimum": 0
+                        },
+                        "total_gmv": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "avg_order_value": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "currency": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 3
+                        },
+                        "data_window_days": {
+                            "type": "integer",
+                            "minimum": 0
+                        },
+                        "data_window_start": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "data_window_end": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "platform": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "frequency_metrics": {
+                    "type": "object",
+                    "required": [
+                        "orders_per_month",
+                        "frequency_tier"
+                    ],
+                    "properties": {
+                        "orders_per_month": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "avg_days_between_orders": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        },
+                        "avg_days_computed_from": {
+                            "type": "string"
+                        },
+                        "estimated_monthly_spend": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "frequency_tier": {
+                            "type": "string",
+                            "enum": [
+                                "super_active",
+                                "active",
+                                "regular",
+                                "occasional",
+                                "churned"
+                            ]
+                        }
+                    }
+                },
+                "recency": {
+                    "type": "object",
+                    "required": [
+                        "rfm_recency_score"
+                    ],
+                    "properties": {
+                        "last_order_date": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "last_order_computed_from": {
+                            "type": "string"
+                        },
+                        "days_since_last_order": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        },
+                        "rfm_recency_score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5
+                        }
+                    }
+                }
+            }
+        },
+        "brand_intelligence": {
+            "type": "object",
+            "required": [
+                "top_brands",
+                "brand_loyalty_score"
+            ],
+            "properties": {
+                "top_brands": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "brand_name",
+                            "rank"
+                        ],
+                        "properties": {
+                            "brand_name": {
+                                "type": "string"
+                            },
+                            "rank": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "is_chain": {
+                                "type": "boolean"
+                            },
+                            "category": {
+                                "type": "string"
+                            },
+                            "order_share_pct": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 100
+                            }
+                        }
+                    }
+                },
+                "brand_loyalty_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "brand_loyalty_scale": {
+                    "type": "string"
+                },
+                "chain_vs_local_preference": {
+                    "type": "string"
+                },
+                "competitor_exposure": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "category_insights": {
+            "type": "object",
+            "required": [
+                "top_categories",
+                "dietary_signals"
+            ],
+            "properties": {
+                "top_categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "category_name",
+                            "order_count",
+                            "rank"
+                        ],
+                        "properties": {
+                            "category_name": {
+                                "type": "string"
+                            },
+                            "iab_code": {
+                                "type": "string"
+                            },
+                            "gs1_code": {
+                                "type": "string"
+                            },
+                            "order_count": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "share_of_wallet": {
+                                "type": "string"
+                            },
+                            "rank": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        }
+                    }
+                },
+                "dietary_signals": {
+                    "type": "object",
+                    "properties": {
+                        "preference": {
+                            "type": "string"
+                        },
+                        "health_conscious": {
+                            "type": "boolean"
+                        },
+                        "variety_seeker": {
+                            "type": "boolean"
+                        },
+                        "spice_preference": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "consumer_profile": {
+            "type": "object",
+            "required": [
+                "spend_tier",
+                "loyalty_tier",
+                "engagement_level"
+            ],
+            "properties": {
+                "spend_tier": {
+                    "type": "string",
+                    "enum": [
+                        "premium",
+                        "high",
+                        "medium",
+                        "low"
+                    ]
+                },
+                "loyalty_tier": {
+                    "type": "string",
+                    "enum": [
+                        "platinum",
+                        "gold",
+                        "silver",
+                        "bronze"
+                    ]
+                },
+                "engagement_level": {
+                    "type": "string"
+                },
+                "timing_preferences": {
+                    "type": "object"
+                }
+            }
+        },
+        "temporal_behavior": {
+            "type": "object"
+        },
+        "price_sensitivity": {
+            "type": "object",
+            "required": [
+                "price_sensitivity_index",
+                "dominant_price_segment"
+            ],
+            "properties": {
+                "price_bucket_distribution": {
+                    "type": "object"
+                },
+                "dominant_price_segment": {
+                    "type": "string"
+                },
+                "discount_usage_rate": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "offer_dependent": {
+                    "type": "boolean"
+                },
+                "price_sensitivity_index": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "price_sensitivity_index_scale": {
+                    "type": "string"
+                },
+                "elasticity_score": {
+                    "type": "string"
+                },
+                "premium_vs_budget_ratio": {
+                    "type": [
+                        "string",
+                        "number"
+                    ]
+                }
+            }
+        },
+        "repeat_patterns": {
+            "type": "object"
+        },
+        "behavioral_traits": {
+            "type": "object"
+        },
+        "competitor_mapping": {
+            "type": "object"
+        },
+        "basket_intelligence": {
+            "type": "object"
+        },
+        "propensity_predictions": {
+            "type": "object"
+        },
+        "geo_data": {
+            "type": "object",
+            "required": [
+                "country"
+            ],
+            "properties": {
+                "geo_bucket": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                },
+                "city_tier": {
+                    "type": "string"
+                },
+                "city_cluster": {
+                    "type": "string"
+                },
+                "geo_inference_method": {
+                    "type": "string"
+                },
+                "neighborhood_affluence_index": {
+                    "type": "string"
+                }
+            }
+        },
+        "basket_samples": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "category_l1": {
+                        "type": "string"
+                    },
+                    "category_l2": {
+                        "type": "string"
+                    },
+                    "brand": {
+                        "type": "string"
+                    },
+                    "price_bucket": {
+                        "type": "string"
+                    },
+                    "inferred_cuisine": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "metadata": {
+            "type": "object",
+            "required": [
+                "source",
+                "verification",
+                "privacy_compliance",
+                "data_quality"
+            ],
+            "properties": {
+                "source": {
+                    "type": "string"
+                },
+                "schema_standard": {
+                    "type": "string"
+                },
+                "verification": {
+                    "type": "object",
+                    "required": [
+                        "status"
+                    ],
+                    "properties": {
+                        "status": {
+                            "type": "string"
+                        },
+                        "proof_type": {
+                            "type": "string"
+                        },
+                        "attestor": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "privacy_compliance": {
+                    "type": "object",
+                    "required": [
+                        "pii_stripped",
+                        "gdpr_compatible"
+                    ],
+                    "properties": {
+                        "pii_stripped": {
+                            "type": "boolean"
+                        },
+                        "k_anonymity_threshold": {
+                            "type": "integer"
+                        },
+                        "k_anonymity_compliant": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ]
+                        },
+                        "k_anonymity_note": {
+                            "type": "string"
+                        },
+                        "cohort_size": {
+                            "type": "integer"
+                        },
+                        "aggregation_status": {
+                            "type": "string"
+                        },
+                        "gdpr_compatible": {
+                            "type": "boolean"
+                        },
+                        "ccpa_compatible": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "data_quality": {
+                    "type": "object",
+                    "required": [
+                        "score",
+                        "completeness"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        "score_breakdown": {
+                            "type": "object"
+                        },
+                        "enrichment_applied": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "completeness": {
+                            "type": "string"
+                        },
+                        "ml_ready": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "commercial_compatibility": {
+                    "type": "object",
+                    "properties": {
+                        "iab_taxonomy": {
+                            "type": "boolean"
+                        },
+                        "gs1_food_codes": {
+                            "type": "boolean"
+                        },
+                        "dmp_friendly": {
+                            "type": "boolean"
+                        },
+                        "audience_segment_ready": {
+                            "type": "boolean"
+                        },
+                        "retail_media_quality": {
+                            "type": "boolean"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
