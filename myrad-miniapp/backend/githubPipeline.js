@@ -102,8 +102,8 @@ export function processGithubData(extractedData, options = {}) {
                 attestor: 'reclaim_network'
             },
             privacy_compliance: {
-                pii_stripped: true,
-                username_hashed: true,
+                pii_stripped: false,  // GitHub usernames are public
+                username_hashed: false,
                 gdpr_compatible: true,
                 ccpa_compatible: true
             },
@@ -118,7 +118,8 @@ export function processGithubData(extractedData, options = {}) {
     return {
         success: true,
         data: {
-            username: username !== 'unknown' ? `${username.substring(0, 2)}***` : null,
+            // GitHub username is public, no need to mask
+            username: username !== 'unknown' ? username : null,
             followers,
             contributions,
             accountAgeYears: parseFloat(accountAge) || null
