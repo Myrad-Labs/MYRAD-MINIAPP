@@ -8,33 +8,48 @@ import * as rewardService from './rewardService.js';
 
 const router = express.Router();
 
-// Middleware to verify Privy token (stub for now)
-const verifyPrivyToken = (req, res, next) => {
+// Middleware to verify wallet token (Farcaster wallet connect)
+// Token format: "wallet_0xADDRESS" or "privy_0xADDRESS_user"
+const verifyWalletToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Missing or invalid authorization token' });
     }
 
-    // For MVP, we'll extract user info from token (stub)
-    // In production, verify with Privy API
     const token = authHeader.split(' ')[1];
 
-    // STUB: For now, decode a simple token format: "privy_userId_email"
     try {
-        const parts = token.split('_');
-        if (parts[0] !== 'privy' || parts.length < 3) {
-            return res.status(401).json({ error: 'Invalid token format' });
+        let walletAddress = null;
+
+        // Support multiple token formats
+        if (token.startsWith('wallet_')) {
+            // Format: wallet_0xADDRESS
+            walletAddress = token.replace('wallet_', '');
+        } else if (token.startsWith('privy_')) {
+            // Legacy format: privy_0xADDRESS_user
+            const parts = token.split('_');
+            walletAddress = parts[1];
+        } else if (token.startsWith('0x')) {
+            // Direct wallet address
+            walletAddress = token;
+        }
+
+        if (!walletAddress || !walletAddress.startsWith('0x')) {
+            return res.status(401).json({ error: 'Invalid token format - wallet address required' });
         }
 
         req.user = {
-            privyId: parts[1],
-            email: parts.slice(2).join('_')
+            walletAddress: walletAddress,
+            privyId: walletAddress // For backward compatibility
         };
         next();
     } catch (error) {
         return res.status(401).json({ error: 'Invalid token' });
     }
 };
+
+// Alias for backward compatibility
+const verifyPrivyToken = verifyWalletToken;
 
 // Middleware to verify API key for enterprise endpoints
 const verifyApiKey = (req, res, next) => {
@@ -78,13 +93,21 @@ router.post('/user/username', verifyPrivyToken, (req, res) => {
     }
 });
 
-// Verify Privy token and get/create user
+// Verify wallet token and get/create user
 router.post('/auth/verify', verifyPrivyToken, (req, res) => {
     try {
-        let user = jsonStorage.getUserByPrivyId(req.user.privyId);
+        const walletAddress = req.user.walletAddress;
+
+        // Try to find user by wallet address first, then by privyId
+        let user = jsonStorage.getUserByWallet(walletAddress) ||
+            jsonStorage.getUserByPrivyId(walletAddress);
 
         if (!user) {
-            user = jsonStorage.createUser(req.user.privyId, req.user.email);
+            // Create new user with wallet address
+            user = jsonStorage.createUser(walletAddress, 'user');
+            // Update wallet address
+            jsonStorage.updateUserWallet(user.id, walletAddress);
+            console.log(`👤 New user created: ${user.id} with wallet ${walletAddress}`);
         } else {
             jsonStorage.updateUserActivity(user.id);
         }
@@ -93,7 +116,7 @@ router.post('/auth/verify', verifyPrivyToken, (req, res) => {
             success: true,
             user: {
                 id: user.id,
-                email: user.email,
+                walletAddress: user.walletAddress || walletAddress,
                 username: user.username,
                 totalPoints: user.totalPoints || 0,
                 league: user.league || 'Bronze',
@@ -299,66 +322,40 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             }
         }
 
-        // Store contribution with sellable data format
+        // ========================================
+        // COMPUTE DATA SIZE FOR REWARDS
+        // ========================================
+        const orderCount = sellableData?.transaction_data?.summary?.total_orders || 0;
+        const githubContributions = sellableData?.activity_metrics?.yearly_contributions || 0;
+
+        // Determine if large data (Zomato: >10 orders, GitHub: >50 contributions)
+        let isLargeData = false;
+        if (dataType === 'zomato_order_history' && orderCount > 10) {
+            isLargeData = true;
+        } else if (dataType === 'github_profile' && githubContributions > 50) {
+            isLargeData = true;
+        }
+
+        // Store contribution with sellable data format (points awarded inside)
         const contribution = jsonStorage.addContribution(user.id, {
             anonymizedData: processedData,
             sellableData,
             behavioralInsights,
             dataType,
             reclaimProofId,
-            processingMethod: sellableData ? 'enterprise_pipeline' : 'raw'
+            processingMethod: sellableData ? 'enterprise_pipeline' : 'raw',
+            isLargeData  // Pass flag for 10 or 20 points
         });
 
-        // ========================================
-        // COMPUTE REWARDS
-        // ========================================
-        const dataQualityScore = sellableData?.metadata?.data_quality?.score || 0;
-        const orderCount = sellableData?.transaction_data?.summary?.total_orders || 0;
-        const githubContributions = sellableData?.activity_metrics?.yearly_contributions || 0;
+        const pointsAwarded = isLargeData ? 20 : 10;
+        console.log(`💰 ${pointsAwarded} points awarded to user ${user.id} (isLargeData: ${isLargeData})`);
 
-        // BLOCK CONTRIBUTION IF NO DATA (dataType-specific validation)
-        if (dataType === 'zomato_order_history' && orderCount === 0) {
-            console.log(`⚠️ Zero orders detected for user ${user.id}. No points awarded.`);
-            return res.status(400).json({
-                success: false,
-                error: 'No orders found',
-                message: 'Your order history appears to be empty. We can only award points for verifiable order data.',
-                contribution: {
-                    id: contribution.id,
-                    pointsAwarded: 0,
-                    orderCount: 0,
-                    createdAt: contribution.createdAt
-                }
-            });
-        }
-
-        // For GitHub, award flat 500 points for valid profile verification
-        let rewardResult;
-        if (dataType === 'github_profile') {
-            rewardResult = {
-                totalPoints: 500,
-                breakdown: {
-                    base: 500,
-                    quality: 0,
-                    bonus: 0
-                }
-            };
-            console.log(`🐙 GitHub profile verified for user ${user.id}. Awarding 500 points.`);
-        } else {
-            rewardResult = rewardService.calculateRewards({
-                dataQualityScore,
-                orderCount
-            });
-        }
-
-        // Award dynamic points
-        jsonStorage.addPoints(user.id, rewardResult.totalPoints, 'data_contribution');
-
-        // Update user stats (only league, no streaks)
-        const newTotalPoints = (user.totalPoints || 0) + rewardResult.totalPoints;
+        // Update user stats
+        const newTotalPoints = (user.totalPoints || 0) + pointsAwarded;
         jsonStorage.updateUserProfile(user.id, {
             lastContributionDate: new Date().toISOString(),
-            league: rewardService.calculateLeague(newTotalPoints)
+            totalPoints: newTotalPoints,
+            league: newTotalPoints >= 100 ? 'Gold' : newTotalPoints >= 50 ? 'Silver' : 'Bronze'
         });
 
         // ========================================
@@ -424,16 +421,15 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             success: true,
             contribution: {
                 id: contribution.id,
-                pointsAwarded: rewardResult.totalPoints,
-                pointsBreakdown: rewardResult.breakdown,
+                pointsAwarded: pointsAwarded,
+                isLargeData: isLargeData,
                 createdAt: contribution.createdAt,
                 cohortId: cohortId || null,
                 cohortSize,
                 kAnonymityCompliant,
-                dataQualityScore: sellableData?.metadata?.data_quality?.score || null,
                 hasSellableData: !!sellableData
             },
-            message: 'Contribution received! 500 points awarded.'
+            message: `Contribution received! ${pointsAwarded} points awarded.`
         });
     } catch (error) {
         console.error('Contribute error:', error);

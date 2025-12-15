@@ -44,54 +44,88 @@ export const useReclaim = () => {
                 request.startSession({
                     onSuccess: (proofs) => {
                         console.log('✅ Reclaim verification successful');
-                        console.log('📦 Raw proofs:', JSON.stringify(proofs, null, 2));
+                        console.log('📦 Raw proofs (full):', proofs);
 
-                        const proof = Array.isArray(proofs) ? proofs[0] : proofs;
-                        let extractedData: Record<string, unknown> = {};
-                        let proofId = `proof_${Date.now()}`;
+                        try {
+                            // Handle both array and single proof
+                            const proof = Array.isArray(proofs) ? proofs[0] : proofs;
+                            let extractedData: Record<string, unknown> = {};
+                            let proofId = `proof_${Date.now()}`;
 
-                        if (typeof proof === 'object' && proof !== null) {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const p = proof as any;
-                            proofId = p.identifier || proofId;
+                            if (typeof proof === 'object' && proof !== null) {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const p = proof as any;
 
-                            // Try to extract data from claimData.context
-                            try {
+                                console.log('📋 Proof keys:', Object.keys(p));
+                                proofId = p.identifier || proofId;
+
+                                // 1. Try claimData.context (primary location)
                                 if (p.claimData?.context) {
-                                    const ctx = JSON.parse(p.claimData.context);
-                                    console.log('📋 Parsed context:', JSON.stringify(ctx, null, 2));
-                                    extractedData = ctx.extractedParameters || {};
+                                    console.log('📋 Raw claimData.context:', p.claimData.context);
+                                    try {
+                                        const ctx = typeof p.claimData.context === 'string'
+                                            ? JSON.parse(p.claimData.context)
+                                            : p.claimData.context;
+                                        console.log('📋 Parsed context:', ctx);
+
+                                        if (ctx.extractedParameters) {
+                                            extractedData = { ...extractedData, ...ctx.extractedParameters };
+                                            console.log('✅ Found extractedParameters:', ctx.extractedParameters);
+                                        }
+
+                                        // Some providers put data directly in context
+                                        if (ctx.providerData) {
+                                            extractedData = { ...extractedData, ...ctx.providerData };
+                                        }
+                                    } catch (e) {
+                                        console.warn('Could not parse context:', e);
+                                    }
                                 }
-                            } catch (e) {
-                                console.warn('Could not parse proof context:', e);
+
+                                // 2. Try claimData.parameters
+                                if (p.claimData?.parameters) {
+                                    console.log('📋 Raw parameters:', p.claimData.parameters);
+                                    try {
+                                        const params = typeof p.claimData.parameters === 'string'
+                                            ? JSON.parse(p.claimData.parameters)
+                                            : p.claimData.parameters;
+
+                                        // Check for responseMatches
+                                        if (params.responseMatches) {
+                                            console.log('📋 Found responseMatches:', params.responseMatches);
+                                        }
+                                    } catch (e) {
+                                        console.warn('Could not parse parameters:', e);
+                                    }
+                                }
+
+                                // 3. Try extractedParameterValues (some SDK versions)
+                                if (p.extractedParameterValues) {
+                                    console.log('✅ Found extractedParameterValues:', p.extractedParameterValues);
+                                    extractedData = { ...extractedData, ...p.extractedParameterValues };
+                                }
+
+                                // 4. Try publicData (some providers use this)
+                                if (p.publicData) {
+                                    console.log('✅ Found publicData:', p.publicData);
+                                    extractedData = { ...extractedData, ...p.publicData };
+                                }
+
+                                // 5. Fallback: include raw claimData for debugging
+                                if (Object.keys(extractedData).length === 0) {
+                                    console.log('⚠️ No extracted data found, including raw claimData');
+                                    extractedData = { rawClaimData: p.claimData };
+                                }
                             }
 
-                            // Also try to get data from claimData.parameters
-                            if (p.claimData?.parameters) {
-                                try {
-                                    const params = typeof p.claimData.parameters === 'string'
-                                        ? JSON.parse(p.claimData.parameters)
-                                        : p.claimData.parameters;
-                                    extractedData = { ...extractedData, ...params };
-                                    console.log('📋 Extracted parameters:', params);
-                                } catch (e) {
-                                    console.warn('Could not parse parameters:', e);
-                                }
-                            }
-
-                            // Fallback: include any claimData fields directly
-                            if (Object.keys(extractedData).length === 0 && p.claimData) {
-                                extractedData = {
-                                    ...extractedData,
-                                    rawClaimData: p.claimData
-                                };
-                                console.log('📋 Using raw claimData as fallback');
-                            }
+                            console.log('📦 FINAL extracted data:', JSON.stringify(extractedData, null, 2));
+                            setIsLoading(false);
+                            resolve({ proofId, data: extractedData });
+                        } catch (parseError) {
+                            console.error('Error parsing proofs:', parseError);
+                            setIsLoading(false);
+                            resolve({ proofId: `proof_${Date.now()}`, data: { parseError: String(parseError) } });
                         }
-
-                        console.log('📦 Final extracted data:', JSON.stringify(extractedData, null, 2));
-                        setIsLoading(false);
-                        resolve({ proofId, data: extractedData });
                     },
                     onError: (err) => {
                         console.error('❌ Reclaim verification error:', err);

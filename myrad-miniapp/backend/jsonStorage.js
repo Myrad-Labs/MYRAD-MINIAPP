@@ -85,17 +85,22 @@ export const getUserById = (userId) => {
     return users.find(u => u.id === userId);
 };
 
-export const createUser = (privyId, email, walletAddress = null) => {
+export const getUserByWallet = (walletAddress) => {
+    const users = getUsers();
+    return users.find(u => u.walletAddress === walletAddress);
+};
+
+export const createUser = (walletAddress, email = 'user') => {
     const users = getUsers();
     const newUser = {
         id: Date.now().toString(),
-        privyId,
+        privyId: walletAddress, // For backward compatibility
         email,
         walletAddress,
         username: null,
         streak: 0,
         lastContributionDate: null,
-        totalPoints: 100, // Signup bonus
+        totalPoints: 10, // Connect bonus: 10 points
         league: 'Bronze',
         createdAt: new Date().toISOString(),
         lastActiveAt: new Date().toISOString()
@@ -103,8 +108,8 @@ export const createUser = (privyId, email, walletAddress = null) => {
     users.push(newUser);
     saveUsers(users);
 
-    // Award signup points
-    addPoints(newUser.id, 100, 'signup_bonus');
+    // Award connect points: 10 points
+    addPoints(newUser.id, 10, 'wallet_connect');
 
     return newUser;
 };
@@ -301,10 +306,12 @@ export const addContribution = (userId, data) => {
     contributions.push(newContribution);
     saveContributions(contributions, dataType);
 
-    // Award points for contribution
-    addPoints(userId, 500, 'data_contribution');
+    // Award points for contribution: 10 for basic, 20 for large data
+    const isLargeData = data.isLargeData || false;
+    const points = isLargeData ? 20 : 10;
+    addPoints(userId, points, 'data_contribution');
 
-    return newContribution;
+    return { ...newContribution, pointsAwarded: points };
 };
 
 // Get all anonymized data for enterprise API
