@@ -294,6 +294,7 @@ export const addContribution = (userId, data) => {
     const newContribution = {
         id: Date.now().toString(),
         userId,
+        walletAddress: data.walletAddress || null,  // Store wallet with contribution
         data: data.anonymizedData,
         sellableData: data.sellableData || null,  // Enterprise-ready format
         behavioralInsights: data.behavioralInsights || null,

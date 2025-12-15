@@ -350,7 +350,8 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             dataType,
             reclaimProofId,
             processingMethod: sellableData ? 'enterprise_pipeline' : 'raw',
-            isLargeData  // Pass flag for 10 or 20 points
+            isLargeData,  // Pass flag for 10 or 20 points
+            walletAddress: user.walletAddress  // Include wallet address in contribution
         });
 
         const pointsAwarded = isLargeData ? 20 : 10;
