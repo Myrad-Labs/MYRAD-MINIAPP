@@ -1,42 +1,15 @@
 [
   {
-    "id": "consent_1765788366455_e3ce6194",
-    "timestamp": "2025-12-15T08:46:06.455Z",
+    "id": "consent_1766236392578_2455b3ce",
+    "timestamp": "2025-12-20T13:13:12.578Z",
     "hashed_user_id": "84ced6bdbf4a02924fc53cbe0841203c82c471fa41a7efa3bdfdd0c7ef673853",
     "hashed_wallet": "b7247e3c0e0891d2aef71c3cb32552a85d3e3988e72aafaddefead86c6123ad6",
-    "proof_id": "0x28e4a1a2bd23bdaf3023cf8eedd5a96d34160547d77576e06a5aaa8754fa3350",
+    "proof_id": "0xad8d3daa1cad5ca08c1fc829a44e557b4eef7ba78692e5a3a58c775de9510c2f",
     "dataset_source": "reclaim_protocol",
-    "data_type": "zomato_order_history",
-    "geo_region": "kolkata",
-    "cohort_id": "zomato_kolkata_premium_super_active",
-    "contribution_id": "1765788366451",
-    "data_summary": {
-      "order_count": 226,
-      "data_window_start": "2020-10-25",
-      "data_window_end": "2025-12-01"
-    },
-    "consent_type": "explicit_contribution",
-    "consent_scope": [
-      "anonymized_behavioral_data",
-      "aggregated_insights"
-    ],
-    "revocable": true,
-    "verification": {
-      "method": "zk_proof",
-      "verified": true
-    }
-  },
-  {
-    "id": "consent_1765788442651_06811324",
-    "timestamp": "2025-12-15T08:47:22.651Z",
-    "hashed_user_id": "84ced6bdbf4a02924fc53cbe0841203c82c471fa41a7efa3bdfdd0c7ef673853",
-    "hashed_wallet": "b7247e3c0e0891d2aef71c3cb32552a85d3e3988e72aafaddefead86c6123ad6",
-    "proof_id": "0x19009a8f12f3dfa744294f4d483a95db1f7b6c2095ccf4db75ca1402bba9201f",
-    "dataset_source": "reclaim_protocol",
-    "data_type": "github_profile",
+    "data_type": "netflix_watch_history",
     "geo_region": "unknown",
-    "cohort_id": "github_intermediate_regular",
-    "contribution_id": "1765788442643",
+    "cohort_id": "netflix_high_engagement_basic_drama",
+    "contribution_id": "1766236392574",
     "data_summary": {
       "order_count": 0,
       "data_window_start": null,

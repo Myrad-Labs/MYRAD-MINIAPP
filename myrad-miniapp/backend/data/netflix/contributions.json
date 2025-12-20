@@ -1,1 +1,477 @@
-[]
+[
+  {
+    "id": "1766236392574",
+    "userId": "1765788366133",
+    "walletAddress": "0x5AADE8727AeC298355FfB7CDC7d8fC330fb33388",
+    "data": {
+      "displayName": "PRADIP",
+      "totalTitles": 169,
+      "totalWatchHours": 126.8,
+      "bingeScore": 95,
+      "topGenres": [
+        "drama",
+        "crime",
+        "action"
+      ],
+      "topSeries": [
+        "Season 1",
+        "Season 2",
+        "The Recruit",
+        "Maamla Legal Hai",
+        "Khakee: The Bengal Chapter"
+      ],
+      "moviesWatched": [
+        "Fast & Furious Presents: Hobbs & Shaw",
+        "Jolly LLB 3",
+        "Deva",
+        "The Fate of the Furious",
+        "Hit Man",
+        "Once Upon a Time in Hollywood",
+        "Bhool Bhulaiyaa",
+        "Guru",
+        "Phantom",
+        "Smurfs: The Lost Village"
+      ]
+    },
+    "sellableData": {
+      "schema_version": "2.0",
+      "dataset_id": "myrad_netflix_v1",
+      "record_type": "streaming_behavior_intelligence",
+      "generated_at": "2025-12-20T13:13:12.573Z",
+      "user_profile": {
+        "profile_name_initial": "P",
+        "total_titles_watched": 169,
+        "total_liked": 0,
+        "total_disliked": 0,
+        "has_ratings": false
+      },
+      "viewing_summary": {
+        "total_titles_watched": 169,
+        "total_watch_hours": 126.8,
+        "unique_series_watched": 12,
+        "unique_movies_watched": 20,
+        "data_window_days": 90,
+        "engagement_tier": "high_engagement"
+      },
+      "content_catalog": {
+        "top_series": [
+          {
+            "name": "Season 1",
+            "episodes_watched": 59,
+            "seasons_watched": 0,
+            "genre": "drama",
+            "rank": 1
+          },
+          {
+            "name": "Season 2",
+            "episodes_watched": 32,
+            "seasons_watched": 0,
+            "genre": "drama",
+            "rank": 2
+          },
+          {
+            "name": "The Recruit",
+            "episodes_watched": 14,
+            "seasons_watched": 2,
+            "genre": "drama",
+            "rank": 3
+          },
+          {
+            "name": "Maamla Legal Hai",
+            "episodes_watched": 8,
+            "seasons_watched": 0,
+            "genre": "drama",
+            "rank": 4
+          },
+          {
+            "name": "Khakee: The Bengal Chapter",
+            "episodes_watched": 7,
+            "seasons_watched": 0,
+            "genre": "crime",
+            "rank": 5
+          },
+          {
+            "name": "Season 3",
+            "episodes_watched": 6,
+            "seasons_watched": 0,
+            "genre": "drama",
+            "rank": 6
+          },
+          {
+            "name": "Narcos",
+            "episodes_watched": 2,
+            "seasons_watched": 1,
+            "genre": "crime",
+            "rank": 7
+          },
+          {
+            "name": "Season 6",
+            "episodes_watched": 2,
+            "seasons_watched": 0,
+            "genre": "drama",
+            "rank": 8
+          },
+          {
+            "name": "Decoupled",
+            "episodes_watched": 2,
+            "seasons_watched": 0,
+            "genre": "drama",
+            "rank": 9
+          },
+          {
+            "name": "The Diplomat",
+            "episodes_watched": 1,
+            "seasons_watched": 1,
+            "genre": "drama",
+            "rank": 10
+          }
+        ],
+        "movies_watched": [
+          {
+            "title": "Fast & Furious Presents: Hobbs & Shaw",
+            "genre": "action",
+            "rank": 1
+          },
+          {
+            "title": "Jolly LLB 3",
+            "genre": "drama",
+            "rank": 2
+          },
+          {
+            "title": "Deva",
+            "genre": "drama",
+            "rank": 3
+          },
+          {
+            "title": "The Fate of the Furious",
+            "genre": "action",
+            "rank": 4
+          },
+          {
+            "title": "Hit Man",
+            "genre": "drama",
+            "rank": 5
+          },
+          {
+            "title": "Once Upon a Time in Hollywood",
+            "genre": "drama",
+            "rank": 6
+          },
+          {
+            "title": "Bhool Bhulaiyaa",
+            "genre": "drama",
+            "rank": 7
+          },
+          {
+            "title": "Guru",
+            "genre": "drama",
+            "rank": 8
+          },
+          {
+            "title": "Phantom",
+            "genre": "drama",
+            "rank": 9
+          },
+          {
+            "title": "Smurfs: The Lost Village",
+            "genre": "kids",
+            "rank": 10
+          },
+          {
+            "title": "Swades: We, the People",
+            "genre": "drama",
+            "rank": 11
+          },
+          {
+            "title": "Pushpa 2: The Rule (Reloaded Version)",
+            "genre": "drama",
+            "rank": 12
+          },
+          {
+            "title": "Bhool Bhulaiyaa 3",
+            "genre": "drama",
+            "rank": 13
+          },
+          {
+            "title": "Bhool Bhulaiyaa 2",
+            "genre": "drama",
+            "rank": 14
+          },
+          {
+            "title": "Toilet: Ek Prem Katha",
+            "genre": "drama",
+            "rank": 15
+          },
+          {
+            "title": "Phir Aayi Hasseen Dillruba",
+            "genre": "drama",
+            "rank": 16
+          },
+          {
+            "title": "Kalki 2898 AD (Hindi)",
+            "genre": "sci-fi",
+            "rank": 17
+          },
+          {
+            "title": "Murder Mubarak",
+            "genre": "crime",
+            "rank": 18
+          },
+          {
+            "title": "Haseen Dillruba",
+            "genre": "drama",
+            "rank": 19
+          },
+          {
+            "title": "Savi",
+            "genre": "drama",
+            "rank": 20
+          }
+        ],
+        "content_type_breakdown": {
+          "series_count": 135,
+          "movie_count": 34,
+          "series_pct": 80,
+          "movie_pct": 20,
+          "dominant_type": "series"
+        },
+        "genre_distribution": [
+          {
+            "genre": "drama",
+            "watch_count": 155,
+            "share_pct": 92,
+            "rank": 1,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Drama",
+              "iab": "IAB1-6"
+            }
+          },
+          {
+            "genre": "crime",
+            "watch_count": 10,
+            "share_pct": 6,
+            "rank": 2,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Crime & Mystery",
+              "iab": "IAB1-4"
+            }
+          },
+          {
+            "genre": "action",
+            "watch_count": 2,
+            "share_pct": 1,
+            "rank": 3,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Action & Adventure",
+              "iab": "IAB1-1"
+            }
+          },
+          {
+            "genre": "kids",
+            "watch_count": 1,
+            "share_pct": 1,
+            "rank": 4,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Kids & Family",
+              "iab": "IAB1-7"
+            }
+          },
+          {
+            "genre": "sci-fi",
+            "watch_count": 1,
+            "share_pct": 1,
+            "rank": 5,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Sci-Fi & Fantasy",
+              "iab": "IAB1-8"
+            }
+          }
+        ]
+      },
+      "viewing_behavior": {
+        "day_of_week_distribution": {
+          "monday": 31,
+          "tuesday": 25,
+          "wednesday": 9,
+          "thursday": 21,
+          "friday": 20,
+          "saturday": 27,
+          "sunday": 36
+        },
+        "time_of_day_curve": {
+          "morning": 4,
+          "afternoon": 45,
+          "evening": 24,
+          "night": 48,
+          "late_night": 28
+        },
+        "peak_viewing_day": "Sunday",
+        "peak_viewing_time": "night",
+        "weekday_vs_weekend_ratio": "0.59",
+        "binge_score": 95,
+        "binge_session_count": 16,
+        "is_binge_watcher": true,
+        "late_night_viewer": true,
+        "monthly_pattern": {
+          "2025-12": 1,
+          "2025-11": 1,
+          "2025-10": 1,
+          "2025-09": 14,
+          "2025-08": 8,
+          "2025-07": 11,
+          "2025-06": 35,
+          "2025-05": 2,
+          "2025-04": 2,
+          "2025-03": 34,
+          "2025-01": 1,
+          "2024-10": 1,
+          "2024-09": 7,
+          "2024-08": 5,
+          "2024-07": 46
+        }
+      },
+      "content_preferences": {
+        "top_genres": [
+          {
+            "genre": "drama",
+            "watch_count": 155,
+            "share_pct": 92,
+            "rank": 1,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Drama",
+              "iab": "IAB1-6"
+            }
+          },
+          {
+            "genre": "crime",
+            "watch_count": 10,
+            "share_pct": 6,
+            "rank": 2,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Crime & Mystery",
+              "iab": "IAB1-4"
+            }
+          },
+          {
+            "genre": "action",
+            "watch_count": 2,
+            "share_pct": 1,
+            "rank": 3,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Action & Adventure",
+              "iab": "IAB1-1"
+            }
+          },
+          {
+            "genre": "kids",
+            "watch_count": 1,
+            "share_pct": 1,
+            "rank": 4,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Kids & Family",
+              "iab": "IAB1-7"
+            }
+          },
+          {
+            "genre": "sci-fi",
+            "watch_count": 1,
+            "share_pct": 1,
+            "rank": 5,
+            "category": {
+              "l1": "Entertainment",
+              "l2": "Sci-Fi & Fantasy",
+              "iab": "IAB1-8"
+            }
+          }
+        ],
+        "genre_diversity_score": 50,
+        "content_type_preference": "series",
+        "series_affinity": 80,
+        "movie_affinity": 20
+      },
+      "subscription_data": {
+        "tier": "basic",
+        "plan_name": "Basic plan",
+        "is_premium": false,
+        "loyalty_tier": "regular",
+        "churn_risk": "low"
+      },
+      "audience_segment": {
+        "segment_id": "netflix_high_engagement_basic_drama",
+        "segment_name": "netflix_high_engagement_drama_basic",
+        "dmp_attributes": {
+          "platform": "netflix",
+          "interest_streaming": true,
+          "interest_entertainment": true,
+          "interest_drama": true,
+          "engagement_level": "high_engagement",
+          "subscription_tier": "basic",
+          "is_binge_watcher": true,
+          "late_night_viewer": true,
+          "content_preference": "series",
+          "genre_primary": "drama",
+          "titles_watched_tier": "heavy"
+        },
+        "iab_categories": [
+          "IAB1-6",
+          "IAB1-4",
+          "IAB1-1"
+        ]
+      },
+      "metadata": {
+        "source": "reclaim_protocol",
+        "provider": "netflix",
+        "schema_standard": "myrad_streaming_intelligence_v2",
+        "verification": {
+          "status": "zk_verified",
+          "proof_type": "zero_knowledge",
+          "attestor": "reclaim_network"
+        },
+        "privacy_compliance": {
+          "pii_stripped": true,
+          "display_name_redacted": true,
+          "k_anonymity_threshold": 10,
+          "k_anonymity_compliant": false,
+          "gdpr_compatible": true,
+          "ccpa_compatible": true,
+          "cohort_id": "netflix_high_engagement_basic_drama",
+          "cohort_size": 1,
+          "aggregation_status": "pending_more_contributors"
+        },
+        "data_quality": {
+          "score": 100,
+          "score_breakdown": {
+            "timestamp_coverage": 100,
+            "title_coverage": 100,
+            "series_data": 100,
+            "data_volume": 100
+          },
+          "completeness": "excellent",
+          "enrichment_applied": [
+            "title_parsing",
+            "series_extraction",
+            "genre_inference",
+            "viewing_behavior_analytics",
+            "content_preference_scoring",
+            "audience_segmentation"
+          ]
+        }
+      }
+    },
+    "behavioralInsights": null,
+    "dataType": "netflix_watch_history",
+    "reclaimProofId": "0xad8d3daa1cad5ca08c1fc829a44e557b4eef7ba78692e5a3a58c775de9510c2f",
+    "processingMethod": "enterprise_pipeline",
+    "status": "verified",
+    "createdAt": "2025-12-20T13:13:12.574Z"
+  }
+]
