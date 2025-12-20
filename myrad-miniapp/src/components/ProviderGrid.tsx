@@ -10,7 +10,7 @@ type Provider = {
   label: string;
   description: string;
   icon: string;
-  dataType: 'zomato_order_history' | 'github_profile';
+  dataType: 'zomato_order_history' | 'github_profile' | 'netflix_watch_history';
 };
 
 const providers: Provider[] = [
@@ -27,6 +27,13 @@ const providers: Provider[] = [
     description: "Developer Profile",
     icon: "🐙",
     dataType: "github_profile",
+  },
+  {
+    id: "netflix",
+    label: "Netflix",
+    description: "Watch History",
+    icon: "🎬",
+    dataType: "netflix_watch_history",
   },
 ];
 

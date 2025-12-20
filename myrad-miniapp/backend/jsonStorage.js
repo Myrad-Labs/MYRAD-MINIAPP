@@ -22,12 +22,15 @@ const API_KEYS_FILE = path.join(DATA_DIR, 'api_keys.json');
 // Provider-specific contribution paths
 const ZOMATO_CONTRIBUTIONS_FILE = path.join(DATA_DIR, 'zomato', 'contributions.json');
 const GITHUB_CONTRIBUTIONS_FILE = path.join(DATA_DIR, 'github', 'contributions.json');
+const NETFLIX_CONTRIBUTIONS_FILE = path.join(DATA_DIR, 'netflix', 'contributions.json');
 
 // Ensure provider directories exist
 const ZOMATO_DIR = path.join(DATA_DIR, 'zomato');
 const GITHUB_DIR = path.join(DATA_DIR, 'github');
+const NETFLIX_DIR = path.join(DATA_DIR, 'netflix');
 if (!fs.existsSync(ZOMATO_DIR)) fs.mkdirSync(ZOMATO_DIR, { recursive: true });
 if (!fs.existsSync(GITHUB_DIR)) fs.mkdirSync(GITHUB_DIR, { recursive: true });
+if (!fs.existsSync(NETFLIX_DIR)) fs.mkdirSync(NETFLIX_DIR, { recursive: true });
 
 // Initialize files if they don't exist
 const initFile = (filePath, defaultData = []) => {
@@ -42,6 +45,7 @@ initFile(CONTRIBUTIONS_FILE, []); // Legacy
 initFile(API_KEYS_FILE, []);
 initFile(ZOMATO_CONTRIBUTIONS_FILE, []);
 initFile(GITHUB_CONTRIBUTIONS_FILE, []);
+initFile(NETFLIX_CONTRIBUTIONS_FILE, []);
 
 // Read JSON file
 const readJSON = (filePath) => {
@@ -234,6 +238,7 @@ export const getWeeklyLeaderboard = (limit = 10) => {
 const getContributionFile = (dataType) => {
     if (dataType === 'zomato_order_history') return ZOMATO_CONTRIBUTIONS_FILE;
     if (dataType === 'github_profile') return GITHUB_CONTRIBUTIONS_FILE;
+    if (dataType === 'netflix_watch_history') return NETFLIX_CONTRIBUTIONS_FILE;
     return CONTRIBUTIONS_FILE; // Fallback to legacy
 };
 
@@ -245,8 +250,9 @@ export const getContributions = (dataType = null) => {
     // Return all contributions from all providers
     const zomato = readJSON(ZOMATO_CONTRIBUTIONS_FILE);
     const github = readJSON(GITHUB_CONTRIBUTIONS_FILE);
+    const netflix = readJSON(NETFLIX_CONTRIBUTIONS_FILE);
     const legacy = readJSON(CONTRIBUTIONS_FILE);
-    return [...zomato, ...github, ...legacy];
+    return [...zomato, ...github, ...netflix, ...legacy];
 };
 
 export const saveContributions = (contributions, dataType = null) => {

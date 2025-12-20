@@ -322,6 +322,28 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             }
         }
 
+        // Process Netflix data through streaming intelligence pipeline
+        if (dataType === 'netflix_watch_history') {
+            try {
+                const { processNetflixData } = await import('./netflixPipeline.js');
+
+                console.log('📦 Processing Netflix data through streaming pipeline...');
+                console.log('RAW NETFLIX DATA:', JSON.stringify(anonymizedData, null, 2));
+
+                const result = await processNetflixData(anonymizedData);
+
+                if (result.success) {
+                    sellableData = result.sellableRecord;
+                    processedData = result.rawProcessed;
+                    console.log('✅ Netflix streaming pipeline complete');
+                    console.log(`📊 Binge score: ${sellableData?.viewing_behavior?.binge_score || 'unknown'}`);
+                }
+            } catch (pipelineError) {
+                console.error('⚠️ Netflix pipeline error:', pipelineError.message);
+                console.error('⚠️ Pipeline stack:', pipelineError.stack);
+            }
+        }
+
         // ========================================
         // COMPUTE DATA SIZE FOR REWARDS
         // ========================================
@@ -331,14 +353,19 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             || 0;
         const githubContributions = sellableData?.activity_metrics?.yearly_contributions
             || parseInt(anonymizedData?.contributionsLastYear || '0', 10);
+        const netflixTitles = sellableData?.viewing_summary?.total_titles_watched
+            || anonymizedData?.watchHistory?.length
+            || 0;
 
-        console.log(`📊 Order count: ${orderCount}, GitHub contributions: ${githubContributions}`);
+        console.log(`📊 Order count: ${orderCount}, GitHub contributions: ${githubContributions}, Netflix titles: ${netflixTitles}`);
 
-        // Determine if large data (Zomato: >10 orders, GitHub: >50 contributions)
+        // Determine if large data (Zomato: >10 orders, GitHub: >50 contributions, Netflix: >20 titles)
         let isLargeData = false;
         if (dataType === 'zomato_order_history' && orderCount > 10) {
             isLargeData = true;
         } else if (dataType === 'github_profile' && githubContributions > 50) {
+            isLargeData = true;
+        } else if (dataType === 'netflix_watch_history' && netflixTitles > 20) {
             isLargeData = true;
         }
 

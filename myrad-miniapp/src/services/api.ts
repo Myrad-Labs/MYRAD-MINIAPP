@@ -14,7 +14,7 @@ export const submitContribution = async (
     walletAddress: string,
     data: {
         anonymizedData: Record<string, unknown>;
-        dataType: 'zomato_order_history' | 'github_profile';
+        dataType: 'zomato_order_history' | 'github_profile' | 'netflix_watch_history';
         reclaimProofId?: string;
     }
 ): Promise<{

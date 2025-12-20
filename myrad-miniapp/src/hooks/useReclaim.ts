@@ -8,8 +8,9 @@ const RECLAIM_APP_ID = import.meta.env.VITE_RECLAIM_APP_ID;
 const RECLAIM_APP_SECRET = import.meta.env.VITE_RECLAIM_APP_SECRET;
 const ZOMATO_PROVIDER_ID = import.meta.env.VITE_ZOMATO_PROVIDER_ID;
 const GITHUB_PROVIDER_ID = import.meta.env.VITE_GITHUB_PROVIDER_ID;
+const NETFLIX_PROVIDER_ID = import.meta.env.VITE_NETFLIX_PROVIDER_ID;
 
-export type ProviderType = 'zomato' | 'github';
+export type ProviderType = 'zomato' | 'github' | 'netflix';
 
 export interface ReclaimResult {
     proofId: string;
@@ -25,7 +26,11 @@ export const useReclaim = () => {
         setError(null);
 
         try {
-            const providerId = provider === 'zomato' ? ZOMATO_PROVIDER_ID : GITHUB_PROVIDER_ID;
+            const providerId = provider === 'zomato'
+                ? ZOMATO_PROVIDER_ID
+                : provider === 'github'
+                    ? GITHUB_PROVIDER_ID
+                    : NETFLIX_PROVIDER_ID;
 
             if (!RECLAIM_APP_ID || !RECLAIM_APP_SECRET || !providerId) {
                 throw new Error('Reclaim not configured');
