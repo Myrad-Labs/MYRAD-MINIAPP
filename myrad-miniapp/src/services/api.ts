@@ -28,13 +28,18 @@ export const submitContribution = async (
     const token = generateAuthToken(walletAddress);
 
     // First verify/create user
-    await fetch(`${API_URL}/api/auth/verify`, {
+    const verifyResponse = await fetch(`${API_URL}/api/auth/verify`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
     });
+
+    if (!verifyResponse.ok) {
+        const errorText = await verifyResponse.text();
+        throw new Error(`Auth verification failed: ${errorText || verifyResponse.statusText}`);
+    }
 
     // Then submit contribution
     const response = await fetch(`${API_URL}/api/contribute`, {

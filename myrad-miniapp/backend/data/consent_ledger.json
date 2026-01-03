@@ -25,5 +25,59 @@
       "method": "zk_proof",
       "verified": true
     }
+  },
+  {
+    "id": "consent_1767458428097_290a1434",
+    "timestamp": "2026-01-03T16:40:28.097Z",
+    "hashed_user_id": "291e3df27087fc77f1ea96553262213233863d21db4616561d53e2d53b02208f",
+    "hashed_wallet": "14eadd9e0b7118874cc5e0d98805d94ef3f589875333b914b6d8f52ee3c25365",
+    "proof_id": "0x513b752d0f4b9fe2c00618a0a928137bb3e82546639b39422df5c9103721a1d3",
+    "dataset_source": "reclaim_protocol",
+    "data_type": "github_profile",
+    "geo_region": "unknown",
+    "cohort_id": "github_intermediate_regular",
+    "contribution_id": "1767458427338",
+    "data_summary": {
+      "order_count": 0,
+      "data_window_start": null,
+      "data_window_end": null
+    },
+    "consent_type": "explicit_contribution",
+    "consent_scope": [
+      "anonymized_behavioral_data",
+      "aggregated_insights"
+    ],
+    "revocable": true,
+    "verification": {
+      "method": "zk_proof",
+      "verified": true
+    }
+  },
+  {
+    "id": "consent_1767466362211_297c447e",
+    "timestamp": "2026-01-03T18:52:42.211Z",
+    "hashed_user_id": "291e3df27087fc77f1ea96553262213233863d21db4616561d53e2d53b02208f",
+    "hashed_wallet": "14eadd9e0b7118874cc5e0d98805d94ef3f589875333b914b6d8f52ee3c25365",
+    "proof_id": "0x513b752d0f4b9fe2c00618a0a928137bb3e82546639b39422df5c9103721a1d3",
+    "dataset_source": "reclaim_protocol",
+    "data_type": "github_profile",
+    "geo_region": "unknown",
+    "cohort_id": "github_intermediate_regular",
+    "contribution_id": "1767466361185",
+    "data_summary": {
+      "order_count": 0,
+      "data_window_start": null,
+      "data_window_end": null
+    },
+    "consent_type": "explicit_contribution",
+    "consent_scope": [
+      "anonymized_behavioral_data",
+      "aggregated_insights"
+    ],
+    "revocable": true,
+    "verification": {
+      "method": "zk_proof",
+      "verified": true
+    }
   }
 ]

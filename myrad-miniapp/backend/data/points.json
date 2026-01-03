@@ -26,5 +26,12 @@
     "points": 20,
     "reason": "data_contribution",
     "createdAt": "2025-12-20T13:13:12.574Z"
+  },
+  {
+    "id": "1767458425368",
+    "userId": "1767458425368",
+    "points": 10,
+    "reason": "wallet_connect",
+    "createdAt": "2026-01-03T16:40:25.368Z"
   }
 ]

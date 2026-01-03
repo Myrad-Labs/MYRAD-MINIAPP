@@ -1,6 +1,8 @@
 // MVP API Routes for MYRAD
 import express from 'express';
 import * as jsonStorage from './jsonStorage.js';
+import * as dbStorage from './dbStorage.js';
+import { sql } from './dbConfig.js';
 import * as cohortService from './cohortService.js';
 import * as consentLedger from './consentLedger.js';
 import * as rewardService from './rewardService.js';
@@ -132,12 +134,12 @@ router.post('/auth/verify', verifyPrivyToken, (req, res) => {
 });
 
 // Get user profile
-router.get('/user/profile', verifyPrivyToken, (req, res) => {
+router.get('/user/profile', verifyPrivyToken, async (req, res) => {
     try {
         const user = jsonStorage.getUserByPrivyId(req.user.privyId);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const contributions = jsonStorage.getUserContributions(user.id);
+        const contributions = await dbStorage.getUserContributions(user.id);
 
         res.json({
             success: true,
@@ -187,7 +189,7 @@ router.get('/user/points', verifyPrivyToken, (req, res) => {
 });
 
 // Get user contributions
-router.get('/user/contributions', verifyPrivyToken, (req, res) => {
+router.get('/user/contributions', verifyPrivyToken, async (req, res) => {
     try {
         const user = jsonStorage.getUserByPrivyId(req.user.privyId);
 
@@ -195,7 +197,7 @@ router.get('/user/contributions', verifyPrivyToken, (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const contributions = jsonStorage.getUserContributions(user.id);
+        const contributions = await dbStorage.getUserContributions(user.id);
 
         res.json({
             success: true,
@@ -236,7 +238,7 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
         // ========================================
         // Check if this exact proof has already been submitted
         if (reclaimProofId) {
-            const existingContributions = jsonStorage.getContributionsByUserId(user.id);
+            const existingContributions = await dbStorage.getContributionsByUserId(user.id);
             const duplicateProof = existingContributions.find(c => c.reclaimProofId === reclaimProofId);
 
             if (duplicateProof) {
@@ -250,7 +252,7 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
         }
 
         // Check for similar data submission within 24 hours (content-based dedup)
-        const recentContributions = jsonStorage.getContributionsByUserId(user.id)
+        const recentContributions = (await dbStorage.getContributionsByUserId(user.id))
             .filter(c => c.dataType === dataType)
             .filter(c => new Date() - new Date(c.createdAt) < 24 * 60 * 60 * 1000); // Last 24 hours
 
@@ -370,7 +372,7 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
         }
 
         // Store contribution with sellable data format (points awarded inside)
-        const contribution = jsonStorage.addContribution(user.id, {
+        const contribution = await dbStorage.addContribution(user.id, {
             anonymizedData: processedData,
             sellableData,
             behavioralInsights,
@@ -400,7 +402,7 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
         let cohortSize = 0;
 
         if (cohortId) {
-            cohortSize = jsonStorage.getCohortSize(cohortId);
+            cohortSize = await dbStorage.getCohortSize(cohortId);
             const MIN_K = 10; // k-anonymity threshold
             kAnonymityCompliant = cohortSize >= MIN_K;
 
@@ -413,19 +415,37 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             cohortSize = cohortData.count;
             kAnonymityCompliant = cohortData.k_anonymity_compliant;
 
-            // Update the contribution's sellable data with k-anonymity status
+            // Update the contribution's sellable data with k-anonymity status in database
             if (sellableData?.metadata?.privacy_compliance) {
-                const contributions = jsonStorage.getContributions(dataType);
-                const idx = contributions.findIndex(c => c.id === contribution.id);
-                if (idx !== -1) {
-                    contributions[idx].sellableData.metadata.privacy_compliance.k_anonymity_compliant = kAnonymityCompliant;
-                    contributions[idx].sellableData.metadata.privacy_compliance.cohort_size = cohortSize;
-                    if (!kAnonymityCompliant) {
-                        contributions[idx].sellableData.metadata.privacy_compliance.aggregation_status = 'pending_more_contributors';
-                    } else {
-                        contributions[idx].sellableData.metadata.privacy_compliance.aggregation_status = 'sellable';
+                const updatedSellableData = {
+                    ...sellableData,
+                    metadata: {
+                        ...sellableData.metadata,
+                        privacy_compliance: {
+                            ...sellableData.metadata.privacy_compliance,
+                            k_anonymity_compliant: kAnonymityCompliant,
+                            cohort_size: cohortSize,
+                            aggregation_status: !kAnonymityCompliant ? 'pending_more_contributors' : 'sellable'
+                        }
                     }
-                    jsonStorage.saveContributions(contributions, dataType);
+                };
+                
+                // Update based on dataType
+                if (dataType === 'zomato_order_history') {
+                    await sql`UPDATE zomato_contributions 
+                              SET sellable_data = ${JSON.stringify(updatedSellableData)}::jsonb,
+                                  updated_at = NOW()
+                              WHERE id = ${contribution.id}`;
+                } else if (dataType === 'netflix_watch_history') {
+                    await sql`UPDATE netflix_contributions 
+                              SET sellable_data = ${JSON.stringify(updatedSellableData)}::jsonb,
+                                  updated_at = NOW()
+                              WHERE id = ${contribution.id}`;
+                } else if (dataType === 'github_profile') {
+                    await sql`UPDATE github_contributions 
+                              SET sellable_data = ${JSON.stringify(updatedSellableData)}::jsonb,
+                                  updated_at = NOW()
+                              WHERE id = ${contribution.id}`;
                 }
             }
         }
@@ -540,11 +560,11 @@ router.get('/enterprise/consent-ledger', verifyApiKey, (req, res) => {
 });
 
 // Get sellable data in enterprise format
-router.get('/enterprise/dataset', verifyApiKey, (req, res) => {
+router.get('/enterprise/dataset', verifyApiKey, async (req, res) => {
     try {
         const { platform, format = 'json', limit = 1000 } = req.query;
 
-        const contributions = jsonStorage.getContributions();
+        const contributions = await dbStorage.getContributions();
 
         // Filter to only contributions with sellable data
         let sellableRecords = contributions
@@ -587,11 +607,11 @@ router.get('/enterprise/dataset', verifyApiKey, (req, res) => {
 });
 
 // Get anonymized data (legacy endpoint)
-router.get('/enterprise/data', verifyApiKey, (req, res) => {
+router.get('/enterprise/data', verifyApiKey, async (req, res) => {
     try {
         const { limit, offset, dataType } = req.query;
 
-        let data = jsonStorage.getAllAnonymizedData();
+        let data = await dbStorage.getAllAnonymizedData();
 
         // Filter by data type if specified
         if (dataType) {
@@ -617,9 +637,9 @@ router.get('/enterprise/data', verifyApiKey, (req, res) => {
 });
 
 // Get aggregated insights
-router.get('/enterprise/insights', verifyApiKey, (req, res) => {
+router.get('/enterprise/insights', verifyApiKey, async (req, res) => {
     try {
-        const allData = jsonStorage.getAllAnonymizedData();
+        const allData = await dbStorage.getAllAnonymizedData();
         const users = jsonStorage.getUsers();
         const allPoints = jsonStorage.getPoints();
 

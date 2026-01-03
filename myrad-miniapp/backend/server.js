@@ -5,6 +5,8 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import config from "./config.js";
 import mvpRoutes from "./mvpRoutes.js";
+import { initializeSchema } from "./dbSchema.js";
+import { testConnection } from "./dbConfig.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,17 +43,34 @@ app.use("/api", mvpRoutes);
 // Note: In development, Vite serves the frontend. 
 // The catchall route is only needed in production when serving built frontend.
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`🚀 MYRAD Backend API listening at http://localhost:${PORT}`);
-  console.log(`📊 MVP Routes: /api/*`);
-  console.log(`🏥 Health check: /health`);
-});
+// Initialize database schema on startup
+(async function startServer() {
+  try {
+    // Test database connection
+    const connected = await testConnection();
+    if (connected) {
+      // Initialize schema (creates tables if they don't exist)
+      await initializeSchema();
+    } else {
+      console.warn('⚠️  Database connection failed - continuing without database');
+    }
+  } catch (error) {
+    console.error('⚠️  Database initialization error:', error.message);
+    console.warn('⚠️  Continuing without database - some features may not work');
+  }
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
+  // Start server
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 MYRAD Backend API listening at http://localhost:${PORT}`);
+    console.log(`📊 MVP Routes: /api/*`);
+    console.log(`🏥 Health check: /health`);
   });
-});
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+    });
+  });
+})();
