@@ -1,5 +1,6 @@
 // src/components/ConnectMenu.tsx
 import { useWallet } from "../hooks/useWallet";
+import { Copy } from "lucide-react";
 import "./ConnectMenu.css";
 
 export function ConnectMenu() {
@@ -12,22 +13,39 @@ export function ConnectMenu() {
     disconnect,
   } = useWallet();
 
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 12)}.....${addr.slice(-10)}`;
+  };
+
   if (isConnected) {
     return (
       <div className="wallet-connected-badge">
         <div className="wallet-info">
           <span className="status-dot-small"></span>
-          <code className="address-compact">
-            {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
-          </code>
+
+          {address && (
+            <div className="wallet-address-row">
+              <code className="address-compact">
+                {formatAddress(address)}
+              </code>
+
+              <button
+                className="copy-btn-icon"
+                onClick={() => navigator.clipboard.writeText(address)}
+                title="Copy wallet address"
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+          )}
         </div>
-        
+
         <button
           onClick={() => disconnect()}
           className="disconnect-btn-compact"
           title="Disconnect Wallet"
         >
-          <span>Disconnect</span>
+          Disconnect
         </button>
       </div>
     );
@@ -46,7 +64,7 @@ export function ConnectMenu() {
       <button
         onClick={handleConnect}
         disabled={isConnecting}
-        className={`btn-primary connect-btn ${isConnecting ? 'loading' : ''}`}
+        className={`btn-primary connect-btn ${isConnecting ? "loading" : ""}`}
       >
         {isConnecting ? (
           <>
@@ -55,12 +73,12 @@ export function ConnectMenu() {
           </>
         ) : (
           <>
-            <span className="wallet-icon">👛</span>
+            <span className="wallet-icon"></span>
             <span>Connect Wallet</span>
           </>
         )}
       </button>
-      
+
       <p className="connect-hint">
         Connect your wallet to get started
       </p>

@@ -33,5 +33,12 @@
     "points": 10,
     "reason": "wallet_connect",
     "createdAt": "2026-01-03T16:40:25.368Z"
+  },
+  {
+    "id": "1767531192769",
+    "userId": "1767531192766",
+    "points": 10,
+    "reason": "wallet_connect",
+    "createdAt": "2026-01-04T12:53:12.769Z"
   }
 ]

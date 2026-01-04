@@ -79,5 +79,32 @@
       "method": "zk_proof",
       "verified": true
     }
+  },
+  {
+    "id": "consent_1767531198360_111cd614",
+    "timestamp": "2026-01-04T12:53:18.360Z",
+    "hashed_user_id": "f81f07bef4a47419d8fdb85b5ef982f8f2ba660502c942333826c233388d3225",
+    "hashed_wallet": "fec8c8e9ad40e0de03a99b747ee61aed5d9579bae9ef4ff559f545d9cdc38958",
+    "proof_id": "0x8b66de090e55d84ee18c92b676690e7adf9533f82e1926dd2d5d6e9cfd197829",
+    "dataset_source": "reclaim_protocol",
+    "data_type": "github_profile",
+    "geo_region": "unknown",
+    "cohort_id": "github_intermediate_regular",
+    "contribution_id": "1767531195477",
+    "data_summary": {
+      "order_count": 0,
+      "data_window_start": null,
+      "data_window_end": null
+    },
+    "consent_type": "explicit_contribution",
+    "consent_scope": [
+      "anonymized_behavioral_data",
+      "aggregated_insights"
+    ],
+    "revocable": true,
+    "verification": {
+      "method": "zk_proof",
+      "verified": true
+    }
   }
 ]

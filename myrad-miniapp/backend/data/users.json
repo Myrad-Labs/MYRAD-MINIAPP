@@ -24,5 +24,18 @@
     "league": "Silver",
     "createdAt": "2026-01-03T16:40:25.368Z",
     "lastActiveAt": "2026-01-03T18:52:42.212Z"
+  },
+  {
+    "id": "1767531192766",
+    "privyId": "0x76a28a4B04181538342915A40175A72094945059",
+    "email": "user",
+    "walletAddress": "0x76a28a4B04181538342915A40175A72094945059",
+    "username": null,
+    "streak": 0,
+    "lastContributionDate": "2026-01-04T12:53:17.842Z",
+    "totalPoints": 30,
+    "league": "Bronze",
+    "createdAt": "2026-01-04T12:53:12.766Z",
+    "lastActiveAt": "2026-01-04T14:02:04.972Z"
   }
 ]
