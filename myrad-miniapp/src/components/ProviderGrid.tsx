@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useReclaim, type ProviderType } from "../hooks/useReclaim";
 import { submitContribution, getUserPoints } from "../services/api";
 import { useWallet } from "../hooks/useWallet";
-import "./ProviderGrid.css";
+import { CheckCircle2, XCircle, ArrowRight, Loader2, X, Trophy } from "lucide-react";
 
 import github from "../assets/github.png";
 import zomato from "../assets/zomato.png";
@@ -15,9 +15,9 @@ type Provider = {
   description: string;
   icon: string;
   dataType:
-    | "zomato_order_history"
-    | "github_profile"
-    | "netflix_watch_history";
+  | "zomato_order_history"
+  | "github_profile"
+  | "netflix_watch_history";
 };
 
 const providers: Provider[] = [
@@ -73,7 +73,7 @@ export function ProviderGrid() {
     if (address) {
       getUserPoints(address)
         .then(setTotalPoints)
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [address]);
 
@@ -127,23 +127,27 @@ export function ProviderGrid() {
   };
 
   return (
-    <div className="provider-grid-container">
+    <div className="w-full">
       {/* Header */}
-      <div className="provider-header">
-        <h2>Contribute & Earn</h2>
-        <p className="provider-subtitle">
-          Verify your data via Reclaim Protocol and earn points
-        </p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Contribute & Earn</h2>
+          <p className="text-slate-500 mt-1">
+            Verify your data via Reclaim Protocol and earn points
+          </p>
+        </div>
 
-        <div className="points-summary">
-          <div className="points-total">
-          <strong>{totalPoints}</strong> Total Points
+        <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-sm">
+          <Trophy className="text-amber-500 fill-amber-500" size={20} />
+          <div className="flex items-baseline gap-1.5">
+            <strong className="text-2xl font-black text-slate-900">{totalPoints.toLocaleString()}</strong>
+            <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Points</span>
           </div>
         </div>
       </div>
 
       {/* Provider Grid */}
-      <div className="provider-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {providers.map((provider) => {
           const claimed = !!providerPoints[provider.id];
 
@@ -151,31 +155,35 @@ export function ProviderGrid() {
             <button
               key={provider.id}
               onClick={() => handleProviderClick(provider)}
-              className="provider-card glass-card"
               disabled={isLoading || claimed}
+              className="group relative flex flex-col items-start w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-xl hover:border-slate-300 hover:-translate-y-1 disabled:opacity-60 disabled:pointer-events-none disabled:hover:translate-y-0 disabled:hover:shadow-sm"
             >
-              <div className="provider-icon">
-                <img
-                  src={provider.icon}
-                  alt={provider.label}
-                  className="provider-icon-img"
-                />
+              <div className="flex justify-between w-full mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-slate-50 p-3 shadow-inner">
+                  <img
+                    src={provider.icon}
+                    alt={provider.label}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className={`p-2 rounded-full transition-colors ${claimed ? 'text-emerald-500 bg-emerald-50' : 'text-slate-300 bg-slate-50 group-hover:text-amber-500 group-hover:bg-amber-50'}`}>
+                  {claimed ? <CheckCircle2 size={24} /> : <ArrowRight size={24} />}
+                </div>
               </div>
 
-              <div className="provider-content">
-                <h3 className="provider-label">{provider.label}</h3>
-                <p className="provider-description">
+              <div className="text-left">
+                <h3 className="text-xl font-bold text-slate-900 mb-1">{provider.label}</h3>
+                <p className="text-slate-500 font-medium text-sm">
                   {provider.description}
                 </p>
-
-                {claimed && (
-                  <div className="claimed-badge">
-                    ✓ Claimed ({providerPoints[provider.id]} pts)
-                  </div>
-                )}
               </div>
 
-              <div className="provider-arrow">→</div>
+              {claimed && (
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                  <CheckCircle2 size={12} />
+                  <span>+{providerPoints[provider.id]} PTS</span>
+                </div>
+              )}
             </button>
           );
         })}
@@ -183,53 +191,87 @@ export function ProviderGrid() {
 
       {/* Modal */}
       {modal.provider && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={closeModal}
+        >
           <div
-            className="modal-box glass-card"
+            className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 animate-in zoom-in-95 duration-200 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="modal-close" onClick={closeModal}>
-              ×
+            <button
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              onClick={closeModal}
+            >
+              <X size={20} strokeWidth={2.5} />
             </button>
 
-            <h3>{modal.provider.label} Verification</h3>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-slate-50 rounded-2xl p-4 mb-6 shadow-inner">
+                <img
+                  src={modal.provider.icon}
+                  alt={modal.provider.label}
+                  className="w-full h-full object-contain"
+                />
+              </div>
 
-            {modal.step === "verifying" && (
-              <>
-                <div className="spinner"></div>
-                <p>Complete verification in the opened window...</p>
-              </>
-            )}
+              <h3 className="text-2xl font-black text-slate-900 mb-2">
+                {modal.provider.label} Verification
+              </h3>
 
-            {modal.step === "submitting" && (
-              <>
-                <div className="spinner"></div>
-                <p>Processing your data...</p>
-              </>
-            )}
-
-            {modal.step === "success" && (
-              <>
-                <div className="success-check">✅</div>
-                <p>Verification complete!</p>
-                <div className="points-earned">
-                  +{modal.points} points
+              {modal.step === "verifying" && (
+                <div className="py-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4">
+                  <Loader2 size={48} className="text-slate-900 animate-spin mb-4" strokeWidth={1.5} />
+                  <p className="text-slate-600 font-medium">Please complete the verification process in the popup window...</p>
                 </div>
-                <button className="btn-done" onClick={closeModal}>
-                  Done
-                </button>
-              </>
-            )}
+              )}
 
-            {modal.step === "error" && (
-              <>
-                <div className="error-x">❌</div>
-                <p>{modal.error}</p>
-                <button className="btn-done" onClick={closeModal}>
-                  Close
-                </button>
-              </>
-            )}
+              {modal.step === "submitting" && (
+                <div className="py-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4">
+                  <div className="relative mb-4">
+                    <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-slate-600 font-medium">Verifying your proof and calculating rewards...</p>
+                </div>
+              )}
+
+              {modal.step === "success" && (
+                <div className="py-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 w-full">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle2 size={32} strokeWidth={3} />
+                  </div>
+                  <p className="text-slate-600 font-medium mb-6">Verification successful! Your contribution has been recorded.</p>
+
+                  <div className="bg-amber-50 text-amber-700 px-6 py-3 rounded-xl font-bold text-lg mb-8 border border-amber-100 w-full">
+                    +{modal.points} Points Earned
+                  </div>
+
+                  <button
+                    className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    onClick={closeModal}
+                  >
+                    Awesome
+                  </button>
+                </div>
+              )}
+
+              {modal.step === "error" && (
+                <div className="py-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 w-full">
+                  <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
+                    <XCircle size={32} strokeWidth={3} />
+                  </div>
+                  <p className="text-rose-600 font-medium mb-8 bg-rose-50 px-4 py-3 rounded-xl w-full">
+                    {modal.error}
+                  </p>
+                  <button
+                    className="w-full py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                    onClick={closeModal}
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

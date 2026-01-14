@@ -4,33 +4,42 @@ import { ConnectMenu } from "../components/ConnectMenu";
 import { ProviderGrid } from "../components/ProviderGrid";
 import { PrivacyPolicy } from "../components/PrivacyPolicy";
 import { TermsConditions } from "../components/TermsConditions";
+import Iridescence from "../components/DynamicBackground";
 import { useWallet } from "../hooks/useWallet";
-import "./Home.css";
 
 export function Home() {
   const { isConnected } = useWallet();
   const [showPrivacy, setShowPrivacy] = useState(false);
-const [showTerms, setShowTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   return (
-    <main className="home-container">
-      <div className="home-content">
+    <main className="min-h-screen w-full relative overflow-hidden bg-white flex flex-col items-center justify-center p-4">
+      <div className="absolute inset-0 opacity-30">
+        <Iridescence
+          color={[1.0, 1.0, 1.0]}
+          mouseReact={false}
+          amplitude={0.1}
+          speed={0.4}
+        />
+      </div>
+      <div className="relative z-10 w-full max-w-4xl mx-auto space-y-12 text-center">
 
         {/* DISCONNECTED STATE */}
         {!isConnected && (
-          <div className="disconnected-layout">
-            <header className="hero-section">
-              <h1 className="hero-title">
-                Welcome to <span className="gradient-text">MYRAD</span>
+          {/* DISCONNECTED STATE */ }
+        {!isConnected && (
+          <div className="animate-fade-in space-y-12">
+            <header className="space-y-6">
+              <h1 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-none drop-shadow-sm">
+                Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-br from-slate-800 to-black">Myrad</span>
               </h1>
 
-              <p className="hero-description">
-                Connect your wallet to unlock personalized insights and
-                contribute your opinions to earn rewards.
+              <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed tracking-tight">
+                Myrad lets you earn from it without giving up your privacy.
               </p>
             </header>
 
-            <section className="connect-section">
+            <section className="flex justify-center pt-8">
               <ConnectMenu />
             </section>
           </div>
@@ -38,45 +47,48 @@ const [showTerms, setShowTerms] = useState(false);
 
         {/* CONNECTED STATE */}
         {isConnected && (
-          <section className="connected-section">
-            <ConnectMenu />
-            <br />
-            <ProviderGrid />
+          <section className="animate-fade-in w-full text-left space-y-8">
+            <div className="flex justify-end">
+              <div className="bg-white/80 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/50">
+                <ConnectMenu />
+              </div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-white/50">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Data Providers</h2>
+              <ProviderGrid />
+            </div>
           </section>
         )}
+
         {/* Footer Privacy Link (always visible) */}
-<div className="privacy-center">
-  <button
-    className="privacy-link"
-    onClick={() => setShowPrivacy(true)}
-  >
-    Privacy Policy
-  </button>
+        <div className="flex items-center justify-center space-x-4 text-sm text-slate-400 font-medium pt-12 pb-6">
+          <button
+            className="hover:text-slate-900 transition-colors"
+            onClick={() => setShowPrivacy(true)}
+          >
+            Privacy Policy
+          </button>
 
-  <span style={{ margin: "0 10px" }}>|</span>
+          <span className="text-slate-300">|</span>
 
-  <button
-    className="privacy-link"
-    onClick={() => setShowTerms(true)}
-  >
-    Terms & Conditions
-  </button>
-</div>
-
-
+          <button
+            className="hover:text-slate-900 transition-colors"
+            onClick={() => setShowTerms(true)}
+          >
+            Terms & Conditions
+          </button>
+        </div>
 
         {/* Privacy Modal */}
-<PrivacyPolicy
-  open={showPrivacy}
-  onClose={() => setShowPrivacy(false)}
-/>
+        <PrivacyPolicy
+          open={showPrivacy}
+          onClose={() => setShowPrivacy(false)}
+        />
 
-<TermsConditions
-  open={showTerms}
-  onClose={() => setShowTerms(false)}
-/>
-
-
+        <TermsConditions
+          open={showTerms}
+          onClose={() => setShowTerms(false)}
+        />
       </div>
     </main>
   );

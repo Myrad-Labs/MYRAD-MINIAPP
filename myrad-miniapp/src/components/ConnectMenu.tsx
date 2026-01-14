@@ -1,7 +1,6 @@
 // src/components/ConnectMenu.tsx
 import { useWallet } from "../hooks/useWallet";
-import { Copy } from "lucide-react";
-import "./ConnectMenu.css";
+import { Copy, Wallet, LogOut, Loader2 } from "lucide-react";
 
 export function ConnectMenu() {
   const {
@@ -14,37 +13,42 @@ export function ConnectMenu() {
   } = useWallet();
 
   const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 12)}.....${addr.slice(-10)}`;
+    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
   };
 
   if (isConnected) {
     return (
-      <div className="wallet-connected-badge">
-        <div className="wallet-info">
-          <span className="status-dot-small"></span>
+      <div className="flex items-center gap-4 bg-white/80 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200/60 shadow-lg shadow-slate-100/50 transition-all hover:shadow-xl hover:border-slate-300/60">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse"></div>
+          </div>
 
           {address && (
-            <div className="wallet-address-row">
-              <code className="address-compact">
+            <div className="flex items-center gap-3">
+              <code className="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-600 font-mono text-sm font-medium border border-slate-100 select-all">
                 {formatAddress(address)}
               </code>
 
               <button
-                className="copy-btn-icon"
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all active:scale-95"
                 onClick={() => navigator.clipboard.writeText(address)}
                 title="Copy wallet address"
               >
-                <Copy size={14} />
+                <Copy size={16} strokeWidth={2.5} />
               </button>
             </div>
           )}
         </div>
 
+        <div className="w-px h-6 bg-slate-200"></div>
+
         <button
           onClick={() => disconnect()}
-          className="disconnect-btn-compact"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-100/80 rounded-xl transition-all active:scale-95"
           title="Disconnect Wallet"
         >
+          <LogOut size={16} strokeWidth={2.5} />
           Disconnect
         </button>
       </div>
@@ -60,28 +64,29 @@ export function ConnectMenu() {
   };
 
   return (
-    <div className="wallet-connect-container">
+    <div className="flex flex-col items-center gap-4">
       <button
         onClick={handleConnect}
         disabled={isConnecting}
-        className={`btn-primary connect-btn ${isConnecting ? "loading" : ""}`}
+        className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 text-white text-base font-bold rounded-2xl shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:shadow-slate-900/20 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 disabled:opacity-70 disabled:pointer-events-none transition-all duration-200"
       >
         {isConnecting ? (
           <>
-            <span className="loading-spinner"></span>
-            <span>Connecting...</span>
+            <Loader2 size={20} className="animate-spin text-slate-400" />
+            <span className="text-slate-300">Connecting...</span>
           </>
         ) : (
           <>
-            <span className="wallet-icon"></span>
+            <Wallet size={20} className="text-slate-300 group-hover:text-white transition-colors" />
             <span>Connect Wallet</span>
           </>
         )}
-      </button>
 
-      <p className="connect-hint">
-        Connect your wallet to get started
-      </p>
+        {/* Shine effect */}
+        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-full bg-gradient-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </button>
     </div>
   );
 }
