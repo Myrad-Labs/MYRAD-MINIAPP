@@ -1,15 +1,20 @@
 {
-  "name": "Myrad Mini App",
-  "description": "A mini app for Myrad platform",
-  "icons": [
-    {
-      "src": "./logo.png"
-    }
-  ],
-  "tabs": [
-    {
-      "path": "/",
-      "label": "Home"
-    }
-  ]
+  "frame": {
+    "name": "Myrad Test",
+    "version": "1",
+    "iconUrl": "https://myrad-miniapp.onrender.com/icon.png",
+    "homeUrl": "https://myrad-miniapp.onrender.com",
+    "imageUrl": "https://myrad-miniapp.onrender.com/image.png",
+    "splashImageUrl": "https://myrad-miniapp.onrender.com/splash.png",
+    "splashBackgroundColor": "#FFFFFF",
+    "webhookUrl": "https://myrad-miniapp.onrender.com/api/webhook",
+    "subtitle": "Test",
+    "description": "Test",
+    "primaryCategory": "utility"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjE0ODQ2MTYsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgxNTIzNzhEODI0MjAxQTQ4NmMzRkJhNEVGRTA1Q2MwMTQ0OUZlODFlIn0",
+    "payload": "eyJkb21haW4iOiJteXJhZC1taW5pYXBwLm9ucmVuZGVyLmNvbSJ9",
+    "signature": "+++4M9iul/cDgwt/4OxzT+d7vJYTZmavM7eeumin/+ACP6O5hS+bPJggtP+QPh5pvSXFJTWq4YANGN3oOUljORw="
+  }
 }
