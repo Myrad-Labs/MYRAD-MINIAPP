@@ -26,7 +26,9 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Serve static frontend files from 'dist' folder (production build)
-app.use(express.static(path.join(__dirname, "../dist")));
+app.use(express.static(path.join(__dirname, "../dist"), {
+  dotfiles: 'allow'
+}));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
