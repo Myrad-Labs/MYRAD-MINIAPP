@@ -16,91 +16,134 @@ const router = express.Router();
 // Receives proofs directly from Reclaim Protocol after external verification
 router.post('/reclaim/callback', async (req, res) => {
     console.log('📥 Reclaim callback received');
-    console.log('📦 Body:', JSON.stringify(req.body, null, 2));
+    console.log('📦 Raw Body:', JSON.stringify(req.body, null, 2));
+    console.log('📦 Content-Type:', req.headers['content-type']);
 
     try {
-        // Extract proof from the callback
-        const { proofs, context } = req.body;
+        let proofData = null;
+        let contextData = null;
 
-        if (!proofs || proofs.length === 0) {
-            console.log('⚠️ No proofs received in callback');
-            return res.status(400).json({ error: 'No proofs provided' });
+        // Handle different Reclaim payload formats
+        // Format 1: { proofs: [...], context: "..." }
+        // Format 2: { proof: {...}, context: "..." }  
+        // Format 3: URL-encoded proof string
+        // Format 4: Direct proof object at root level
+
+        if (req.body.proofs && Array.isArray(req.body.proofs) && req.body.proofs.length > 0) {
+            proofData = req.body.proofs[0];
+            contextData = req.body.context;
+            console.log('📋 Format: proofs array');
+        } else if (req.body.proof) {
+            proofData = req.body.proof;
+            contextData = req.body.context;
+            console.log('📋 Format: single proof object');
+        } else if (req.body.claimData) {
+            // Direct proof object at root
+            proofData = req.body;
+            contextData = req.body.context;
+            console.log('📋 Format: direct proof at root');
+        } else if (typeof req.body === 'string') {
+            // URL-encoded string
+            try {
+                proofData = JSON.parse(decodeURIComponent(req.body));
+                console.log('📋 Format: URL-encoded string');
+            } catch (e) {
+                console.log('⚠️ Could not parse URL-encoded body');
+            }
+        } else if (Object.keys(req.body).length > 0) {
+            // Try to find proof-like data in the body
+            const bodyKeys = Object.keys(req.body);
+            console.log('📋 Body keys:', bodyKeys);
+
+            // Accept the full body as proof data for debugging
+            proofData = req.body;
+            contextData = req.body.context || req.body.sessionData;
+            console.log('📋 Format: accepting full body as proof');
+        }
+
+        if (!proofData) {
+            console.log('⚠️ No proof data found in any format');
+            console.log('⚠️ Raw body type:', typeof req.body);
+            console.log('⚠️ Raw body keys:', Object.keys(req.body || {}));
+            return res.status(400).json({
+                error: 'No proofs provided',
+                receivedKeys: Object.keys(req.body || {}),
+                bodyType: typeof req.body
+            });
         }
 
         // Parse context to get user info
         let sessionData = {};
-        try {
-            sessionData = context ? JSON.parse(context) : {};
-        } catch (e) {
-            console.log('⚠️ Could not parse context');
+        if (contextData) {
+            try {
+                sessionData = typeof contextData === 'string' ? JSON.parse(contextData) : contextData;
+            } catch (e) {
+                console.log('⚠️ Could not parse context:', contextData);
+            }
         }
 
         const { walletAddress, provider, dataType } = sessionData;
-        console.log(`📋 Processing callback for wallet: ${walletAddress}, provider: ${provider}`);
+        console.log(`📋 Session data: wallet=${walletAddress}, provider=${provider}`);
 
-        if (!walletAddress) {
-            console.log('⚠️ No wallet address in callback context');
-            return res.status(400).json({ error: 'Missing wallet address in context' });
-        }
-
-        // Get or create user
-        let user = jsonStorage.getUserByWallet(walletAddress) ||
-            jsonStorage.getUserByPrivyId(walletAddress);
-
-        if (!user) {
-            user = jsonStorage.createUser(walletAddress, 'user');
-            jsonStorage.updateUserWallet(user.id, walletAddress);
-            console.log(`👤 New user created from callback: ${user.id}`);
-        }
-
-        // Process the proof
-        const proof = Array.isArray(proofs) ? proofs[0] : proofs;
+        // Extract data from proof
         let extractedData = {};
         let proofId = `proof_${Date.now()}`;
 
-        if (typeof proof === 'object' && proof !== null) {
-            proofId = proof.identifier || proofId;
+        if (typeof proofData === 'object' && proofData !== null) {
+            proofId = proofData.identifier || proofData.id || proofId;
 
-            // Extract data from claimData.context
-            if (proof.claimData?.context) {
+            // Extract from claimData.context
+            if (proofData.claimData?.context) {
                 try {
-                    const ctx = typeof proof.claimData.context === 'string'
-                        ? JSON.parse(proof.claimData.context)
-                        : proof.claimData.context;
+                    const ctx = typeof proofData.claimData.context === 'string'
+                        ? JSON.parse(proofData.claimData.context)
+                        : proofData.claimData.context;
 
                     if (ctx.extractedParameters) {
                         extractedData = { ...extractedData, ...ctx.extractedParameters };
                     }
                 } catch (e) {
-                    console.warn('Could not parse proof context:', e);
+                    console.warn('Could not parse proof context');
                 }
             }
 
-            if (proof.extractedParameterValues) {
-                extractedData = { ...extractedData, ...proof.extractedParameterValues };
+            if (proofData.extractedParameterValues) {
+                extractedData = { ...extractedData, ...proofData.extractedParameterValues };
+            }
+
+            // Fallback: store raw proof data
+            if (Object.keys(extractedData).length === 0) {
+                extractedData = { rawProof: proofData };
             }
         }
 
         console.log('📦 Extracted data:', JSON.stringify(extractedData, null, 2));
 
-        // Store the pending contribution for the frontend to pick up
-        const pendingKey = `pending_${walletAddress}_${provider}`;
+        // Store pending contribution even without wallet (will match by provider)
+        const pendingKey = walletAddress
+            ? `pending_${walletAddress}_${provider || 'unknown'}`
+            : `pending_latest_${provider || Date.now()}`;
+
         global.pendingContributions = global.pendingContributions || {};
         global.pendingContributions[pendingKey] = {
             proofId,
             data: extractedData,
             dataType: dataType || `${provider}_data`,
-            provider,
-            walletAddress,
-            timestamp: Date.now()
+            provider: provider || 'unknown',
+            walletAddress: walletAddress || null,
+            timestamp: Date.now(),
+            rawProof: proofData
         };
+
+        // Also store by proof ID for lookup
+        global.pendingContributions[`proof_${proofId}`] = global.pendingContributions[pendingKey];
 
         console.log(`✅ Stored pending contribution: ${pendingKey}`);
 
-        res.json({ success: true, message: 'Proof received' });
+        res.json({ success: true, message: 'Proof received', proofId });
     } catch (error) {
         console.error('❌ Reclaim callback error:', error);
-        res.status(500).json({ error: 'Failed to process proof' });
+        res.status(500).json({ error: 'Failed to process proof', details: error.message });
     }
 });
 
@@ -118,6 +161,20 @@ router.get('/reclaim/pending/:walletAddress/:provider', (req, res) => {
         delete global.pendingContributions[pendingKey];
         console.log(`✅ Found and returned pending contribution`);
         return res.json({ success: true, contribution: pending });
+    }
+
+    // Try to find any recent pending contribution
+    const allPending = global.pendingContributions || {};
+    const recentKey = Object.keys(allPending).find(k =>
+        k.includes(provider) &&
+        allPending[k].timestamp > Date.now() - 120000 // Within last 2 minutes
+    );
+
+    if (recentKey) {
+        const recentPending = allPending[recentKey];
+        delete global.pendingContributions[recentKey];
+        console.log(`✅ Found recent pending contribution: ${recentKey}`);
+        return res.json({ success: true, contribution: recentPending });
     }
 
     res.json({ success: false, message: 'No pending contribution found' });
