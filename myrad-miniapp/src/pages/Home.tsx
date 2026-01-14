@@ -29,12 +29,12 @@ export function Home() {
         {!isConnected && (
           <div className="animate-fade-in space-y-12">
             <header className="space-y-6">
-              <h1 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-none drop-shadow-sm">
-                Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-br from-slate-800 to-black">Myrad</span>
-              </h1>
+              <h2 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-none drop-shadow-sm">
+                <span className="text-transparent bg-clip-text bg-gradient-to-br from-slate-800 to-black">Myrad</span>
+              </h2>
 
               <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed tracking-tight">
-                Myrad lets you earn from your digital activities without giving up your privacy.
+                We let you earn from your digital activities without giving up your privacy
               </p>
             </header>
 
