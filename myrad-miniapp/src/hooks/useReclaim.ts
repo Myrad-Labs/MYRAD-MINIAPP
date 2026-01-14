@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { ReclaimProofRequest } from '@reclaimprotocol/js-sdk';
+import sdk from '@farcaster/miniapp-sdk';
 
 const RECLAIM_APP_ID = import.meta.env.VITE_RECLAIM_APP_ID;
 const RECLAIM_APP_SECRET = import.meta.env.VITE_RECLAIM_APP_SECRET;
@@ -43,7 +44,9 @@ export const useReclaim = () => {
             );
 
             const url = await request.getRequestUrl();
-            window.open(url, '_blank');
+
+            // Use Farcaster SDK to open external URL in mini-app context
+            sdk.actions.openUrl(url);
 
             return new Promise((resolve, reject) => {
                 request.startSession({
