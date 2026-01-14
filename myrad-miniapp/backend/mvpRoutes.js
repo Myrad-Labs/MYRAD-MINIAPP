@@ -474,11 +474,37 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const { anonymizedData, dataType, reclaimProofId } = req.body;
+        // Accept data from multiple field names (Reclaim sends various formats)
+        let inputData = req.body.anonymizedData
+            || req.body.data
+            || req.body.rawData
+            || req.body.proofData
+            || req.body.extractedData;
 
-        if (!anonymizedData) {
-            return res.status(400).json({ error: 'anonymizedData is required' });
+        // If no specific field found, use the entire body (minus metadata fields)
+        if (!inputData && Object.keys(req.body).length > 0) {
+            const { dataType: dt, reclaimProofId: rp, ...rest } = req.body;
+            if (Object.keys(rest).length > 0) {
+                inputData = rest;
+                console.log('📦 Using full request body as input data');
+            }
         }
+
+        const { dataType, reclaimProofId } = req.body;
+
+        // Only fail if we truly have no data
+        if (!inputData || Object.keys(inputData).length === 0) {
+            console.log('⚠️ No input data found. Body keys:', Object.keys(req.body));
+            return res.status(400).json({
+                error: 'No data provided',
+                message: 'Please provide data in one of: anonymizedData, data, rawData, proofData fields',
+                receivedKeys: Object.keys(req.body)
+            });
+        }
+
+        // Normalize to anonymizedData for downstream processing
+        const anonymizedData = inputData;
+        console.log('📦 Input data accepted. Keys:', Object.keys(anonymizedData));
 
         // Extract wallet address from the data if present
         const walletAddress = anonymizedData?.walletAddress || null;
