@@ -30,7 +30,7 @@ export function Home() {
           <div className="animate-fade-in space-y-12">
             <header className="space-y-6">
               <h2 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-none drop-shadow-sm">
-                <span className="text-transparent bg-clip-text bg-gradient-to-br from-slate-800 to-black">Myrad</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-br from-slate-800 to-black">MYRAD</span>
               </h2>
 
               <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed tracking-tight">
