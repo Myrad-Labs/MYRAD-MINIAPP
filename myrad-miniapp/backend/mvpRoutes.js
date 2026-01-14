@@ -154,27 +154,41 @@ router.get('/reclaim/pending/:walletAddress/:provider', (req, res) => {
 
     console.log(`🔍 Checking pending contribution: ${pendingKey}`);
 
-    const pending = global.pendingContributions?.[pendingKey];
+    const allPending = global.pendingContributions || {};
+    console.log(`📋 All pending keys: ${Object.keys(allPending).join(', ') || 'none'}`);
+
+    // First, try exact match
+    let pending = allPending[pendingKey];
+    let foundKey = pendingKey;
+
+    if (!pending) {
+        // Try to find any recent pending contribution (within last 5 minutes)
+        const recentKeys = Object.keys(allPending)
+            .filter(k => {
+                const contribution = allPending[k];
+                return contribution &&
+                    contribution.timestamp > Date.now() - 300000; // 5 minutes
+            })
+            .sort((a, b) => allPending[b].timestamp - allPending[a].timestamp); // Most recent first
+
+        if (recentKeys.length > 0) {
+            foundKey = recentKeys[0];
+            pending = allPending[foundKey];
+            console.log(`📋 Found recent pending by timestamp: ${foundKey}`);
+        }
+    }
 
     if (pending) {
         // Remove after retrieval
-        delete global.pendingContributions[pendingKey];
+        delete global.pendingContributions[foundKey];
+        // Also clean up any duplicate entries
+        Object.keys(allPending).forEach(k => {
+            if (allPending[k]?.proofId === pending.proofId) {
+                delete global.pendingContributions[k];
+            }
+        });
         console.log(`✅ Found and returned pending contribution`);
         return res.json({ success: true, contribution: pending });
-    }
-
-    // Try to find any recent pending contribution
-    const allPending = global.pendingContributions || {};
-    const recentKey = Object.keys(allPending).find(k =>
-        k.includes(provider) &&
-        allPending[k].timestamp > Date.now() - 120000 // Within last 2 minutes
-    );
-
-    if (recentKey) {
-        const recentPending = allPending[recentKey];
-        delete global.pendingContributions[recentKey];
-        console.log(`✅ Found recent pending contribution: ${recentKey}`);
-        return res.json({ success: true, contribution: recentPending });
     }
 
     res.json({ success: false, message: 'No pending contribution found' });
