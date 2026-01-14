@@ -25,8 +25,7 @@ export function Home() {
       <div className="relative z-10 w-full max-w-4xl mx-auto space-y-12 text-center">
 
         {/* DISCONNECTED STATE */}
-        {!isConnected && (
-          {/* DISCONNECTED STATE */ }
+        {/* DISCONNECTED STATE */}
         {!isConnected && (
           <div className="animate-fade-in space-y-12">
             <header className="space-y-6">
@@ -35,7 +34,7 @@ export function Home() {
               </h1>
 
               <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed tracking-tight">
-                Myrad lets you earn from it without giving up your privacy.
+                Myrad lets you earn from your digital activities without giving up your privacy.
               </p>
             </header>
 
@@ -47,14 +46,13 @@ export function Home() {
 
         {/* CONNECTED STATE */}
         {isConnected && (
-          <section className="animate-fade-in w-full text-left space-y-8">
+          <section className="animate-fade-in w-full text-left space-y-4">
             <div className="flex justify-end">
               <div className="bg-white/80 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/50">
                 <ConnectMenu />
               </div>
             </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-white/50">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Data Providers</h2>
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-4 md:p-8 shadow-xl shadow-slate-200/50 border border-white/50">
               <ProviderGrid />
             </div>
           </section>

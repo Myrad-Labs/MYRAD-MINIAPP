@@ -129,25 +129,25 @@ export function ProviderGrid() {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Contribute & Earn</h2>
-          <p className="text-slate-500 mt-1">
-            Verify your data via Reclaim Protocol and earn points
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Contribute & Earn</h2>
+          <p className="text-slate-500 text-sm">
+            Verify data via Reclaim Protocol to earn
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-sm">
-          <Trophy className="text-amber-500 fill-amber-500" size={20} />
-          <div className="flex items-baseline gap-1.5">
-            <strong className="text-2xl font-black text-slate-900">{totalPoints.toLocaleString()}</strong>
-            <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Points</span>
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+          <Trophy className="text-amber-500 fill-amber-500" size={18} />
+          <div className="flex items-baseline gap-1">
+            <strong className="text-xl font-black text-slate-900">{totalPoints.toLocaleString()}</strong>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PTS</span>
           </div>
         </div>
       </div>
 
-      {/* Provider Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Provider Grid - Compact vertical list for mobile, grid for desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {providers.map((provider) => {
           const claimed = !!providerPoints[provider.id];
 
@@ -156,32 +156,35 @@ export function ProviderGrid() {
               key={provider.id}
               onClick={() => handleProviderClick(provider)}
               disabled={isLoading || claimed}
-              className="group relative flex flex-col items-start w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-xl hover:border-slate-300 hover:-translate-y-1 disabled:opacity-60 disabled:pointer-events-none disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+              className="group relative flex flex-row items-center w-full bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none"
             >
-              <div className="flex justify-between w-full mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-slate-50 p-3 shadow-inner">
-                  <img
-                    src={provider.icon}
-                    alt={provider.label}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className={`p-2 rounded-full transition-colors ${claimed ? 'text-emerald-500 bg-emerald-50' : 'text-slate-300 bg-slate-50 group-hover:text-amber-500 group-hover:bg-amber-50'}`}>
-                  {claimed ? <CheckCircle2 size={24} /> : <ArrowRight size={24} />}
-                </div>
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-lg bg-slate-50 p-2 shadow-inner shrink-0 mr-4">
+                <img
+                  src={provider.icon}
+                  alt={provider.label}
+                  className="w-full h-full object-contain"
+                />
               </div>
 
-              <div className="text-left">
-                <h3 className="text-xl font-bold text-slate-900 mb-1">{provider.label}</h3>
-                <p className="text-slate-500 font-medium text-sm">
+              {/* Text */}
+              <div className="text-left flex-grow min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 truncate">{provider.label}</h3>
+                <p className="text-slate-500 font-medium text-xs truncate">
                   {provider.description}
                 </p>
               </div>
 
+              {/* Action/Status */}
+              <div className="ml-3 shrink-0">
+                <div className={`p-1.5 rounded-full transition-colors ${claimed ? 'text-emerald-500 bg-emerald-50' : 'text-slate-300 bg-slate-50 group-hover:text-amber-500 group-hover:bg-amber-50'}`}>
+                  {claimed ? <CheckCircle2 size={20} /> : <ArrowRight size={20} />}
+                </div>
+              </div>
+
               {claimed && (
-                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
-                  <CheckCircle2 size={12} />
-                  <span>+{providerPoints[provider.id]} PTS</span>
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-emerald-100/90 backdrop-blur-sm text-emerald-700 text-[10px] font-bold rounded-full shadow-sm">
+                  <span>+{providerPoints[provider.id]}</span>
                 </div>
               )}
             </button>
