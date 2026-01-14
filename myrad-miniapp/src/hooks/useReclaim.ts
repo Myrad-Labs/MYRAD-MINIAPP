@@ -1,7 +1,7 @@
 // src/hooks/useReclaim.ts
 // Hook for Reclaim Protocol verification with callback URL approach for mini-apps
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ReclaimProofRequest } from '@reclaimprotocol/js-sdk';
 import sdk from '@farcaster/miniapp-sdk';
 import { useWallet } from './useWallet';
@@ -26,40 +26,81 @@ export interface ReclaimResult {
     data: Record<string, unknown>;
 }
 
+export interface PendingVerification {
+    provider: ProviderType;
+    startedAt: number;
+}
+
+// Check for pending contribution from backend
+export const checkPendingContribution = async (
+    walletAddress: string,
+    provider: ProviderType
+): Promise<ReclaimResult | null> => {
+    try {
+        const response = await fetch(`${API_URL}/api/reclaim/pending/${walletAddress}/${provider}`);
+        const data = await response.json();
+
+        if (data.success && data.contribution) {
+            console.log('✅ Found pending contribution:', data.contribution);
+            return {
+                proofId: data.contribution.proofId,
+                data: data.contribution.data
+            };
+        }
+    } catch (e) {
+        console.warn('Check pending failed:', e);
+    }
+    return null;
+};
+
 export const useReclaim = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [pendingVerification, setPendingVerification] = useState<PendingVerification | null>(null);
     const { address } = useWallet();
+    const callbackRef = useRef<((result: ReclaimResult | null) => void) | null>(null);
 
-    // Poll backend for pending contribution after user returns from Reclaim
-    const pollForPendingContribution = useCallback(async (
-        walletAddress: string,
-        provider: ProviderType,
-        maxAttempts = 30,
-        intervalMs = 2000
-    ): Promise<ReclaimResult | null> => {
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            try {
-                const response = await fetch(`${API_URL}/api/reclaim/pending/${walletAddress}/${provider}`);
-                const data = await response.json();
+    // Listen for visibility changes to check for completed verifications
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible' && pendingVerification && address) {
+                console.log('📱 App became visible, checking for pending contribution...');
 
-                if (data.success && data.contribution) {
-                    console.log('✅ Found pending contribution:', data.contribution);
-                    return {
-                        proofId: data.contribution.proofId,
-                        data: data.contribution.data
-                    };
+                // Small delay to ensure backend has processed
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                const result = await checkPendingContribution(address, pendingVerification.provider);
+
+                if (result && callbackRef.current) {
+                    console.log('✅ Found result after visibility change');
+                    callbackRef.current(result);
+                    setPendingVerification(null);
+                    callbackRef.current = null;
                 }
-            } catch (e) {
-                console.warn('Poll attempt failed:', e);
             }
+        };
 
-            // Wait before next attempt
-            await new Promise(resolve => setTimeout(resolve, intervalMs));
-        }
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        return null;
-    }, []);
+        // Also check periodically while visible (for cases where visibility event isn't fired)
+        const interval = setInterval(async () => {
+            if (document.visibilityState === 'visible' && pendingVerification && address) {
+                const result = await checkPendingContribution(address, pendingVerification.provider);
+                if (result && callbackRef.current) {
+                    console.log('✅ Found result during polling');
+                    callbackRef.current(result);
+                    setPendingVerification(null);
+                    callbackRef.current = null;
+                    setIsLoading(false);
+                }
+            }
+        }, 3000);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            clearInterval(interval);
+        };
+    }, [pendingVerification, address]);
 
     const verify = useCallback(async (provider: ProviderType): Promise<ReclaimResult | null> => {
         setIsLoading(true);
@@ -100,28 +141,56 @@ export const useReclaim = () => {
 
             const url = await request.getRequestUrl();
             console.log('📋 Reclaim URL generated:', url);
-            console.log('📋 Callback URL:', callbackUrl);
 
-            // Open Reclaim verification using Farcaster SDK
-            sdk.actions.openUrl(url);
+            // Store pending verification state
+            setPendingVerification({ provider, startedAt: Date.now() });
 
-            // Poll for the proof to arrive at our backend
-            console.log('⏳ Waiting for Reclaim callback...');
-            const result = await pollForPendingContribution(address, provider);
+            // Return a promise that will be resolved when visibility changes detect the result
+            return new Promise((resolve) => {
+                callbackRef.current = (result) => {
+                    setIsLoading(false);
+                    resolve(result);
+                };
 
-            if (result) {
-                setIsLoading(false);
-                return result;
-            } else {
-                throw new Error('Verification timed out. Please try again.');
-            }
+                // Open Reclaim verification using Farcaster SDK
+                // This will navigate away from the app
+                sdk.actions.openUrl(url);
+
+                // Set a timeout to resolve with null if no result after 3 minutes
+                setTimeout(() => {
+                    if (callbackRef.current) {
+                        console.log('⏰ Verification timed out');
+                        setError('Verification timed out. Please try again.');
+                        setIsLoading(false);
+                        setPendingVerification(null);
+                        callbackRef.current = null;
+                        resolve(null);
+                    }
+                }, 180000); // 3 minutes
+            });
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Verification failed';
             setError(msg);
             setIsLoading(false);
             return null;
         }
-    }, [address, pollForPendingContribution]);
+    }, [address]);
 
-    return { verify, isLoading, error };
+    const cancelVerification = useCallback(() => {
+        setPendingVerification(null);
+        callbackRef.current = null;
+        setIsLoading(false);
+        setError(null);
+    }, []);
+
+    return {
+        verify,
+        isLoading,
+        error,
+        pendingVerification,
+        cancelVerification,
+        checkPendingContribution: address
+            ? (provider: ProviderType) => checkPendingContribution(address, provider)
+            : null
+    };
 };
