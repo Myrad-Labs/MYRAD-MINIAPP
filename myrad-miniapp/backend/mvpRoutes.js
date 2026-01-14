@@ -15,9 +15,18 @@ const router = express.Router();
 // ===================
 // Receives proofs directly from Reclaim Protocol after external verification
 router.post('/reclaim/callback', async (req, res) => {
-    console.log('📥 Reclaim callback received');
-    console.log('📦 Raw Body:', JSON.stringify(req.body, null, 2));
+    console.log('\n========================================');
+    console.log('📥 RECLAIM CALLBACK RECEIVED');
+    console.log('========================================');
+    console.log('⏰ Timestamp:', new Date().toISOString());
     console.log('📦 Content-Type:', req.headers['content-type']);
+    console.log('📦 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📦 Query Params:', JSON.stringify(req.query, null, 2));
+    console.log('📦 RAW BODY (stringified):');
+    console.log(JSON.stringify(req.body, null, 2));
+    console.log('📦 Body Type:', typeof req.body);
+    console.log('📦 Body Keys:', Object.keys(req.body || {}));
+    console.log('========================================\n');
 
     try {
         let proofData = null;
