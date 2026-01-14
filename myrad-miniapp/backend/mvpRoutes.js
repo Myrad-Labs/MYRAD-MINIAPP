@@ -10,6 +10,119 @@ import * as rewardService from './rewardService.js';
 
 const router = express.Router();
 
+// ===================
+// RECLAIM WEBHOOK ENDPOINT
+// ===================
+// Receives proofs directly from Reclaim Protocol after external verification
+router.post('/reclaim/callback', async (req, res) => {
+    console.log('📥 Reclaim callback received');
+    console.log('📦 Body:', JSON.stringify(req.body, null, 2));
+
+    try {
+        // Extract proof from the callback
+        const { proofs, context } = req.body;
+
+        if (!proofs || proofs.length === 0) {
+            console.log('⚠️ No proofs received in callback');
+            return res.status(400).json({ error: 'No proofs provided' });
+        }
+
+        // Parse context to get user info
+        let sessionData = {};
+        try {
+            sessionData = context ? JSON.parse(context) : {};
+        } catch (e) {
+            console.log('⚠️ Could not parse context');
+        }
+
+        const { walletAddress, provider, dataType } = sessionData;
+        console.log(`📋 Processing callback for wallet: ${walletAddress}, provider: ${provider}`);
+
+        if (!walletAddress) {
+            console.log('⚠️ No wallet address in callback context');
+            return res.status(400).json({ error: 'Missing wallet address in context' });
+        }
+
+        // Get or create user
+        let user = jsonStorage.getUserByWallet(walletAddress) ||
+            jsonStorage.getUserByPrivyId(walletAddress);
+
+        if (!user) {
+            user = jsonStorage.createUser(walletAddress, 'user');
+            jsonStorage.updateUserWallet(user.id, walletAddress);
+            console.log(`👤 New user created from callback: ${user.id}`);
+        }
+
+        // Process the proof
+        const proof = Array.isArray(proofs) ? proofs[0] : proofs;
+        let extractedData = {};
+        let proofId = `proof_${Date.now()}`;
+
+        if (typeof proof === 'object' && proof !== null) {
+            proofId = proof.identifier || proofId;
+
+            // Extract data from claimData.context
+            if (proof.claimData?.context) {
+                try {
+                    const ctx = typeof proof.claimData.context === 'string'
+                        ? JSON.parse(proof.claimData.context)
+                        : proof.claimData.context;
+
+                    if (ctx.extractedParameters) {
+                        extractedData = { ...extractedData, ...ctx.extractedParameters };
+                    }
+                } catch (e) {
+                    console.warn('Could not parse proof context:', e);
+                }
+            }
+
+            if (proof.extractedParameterValues) {
+                extractedData = { ...extractedData, ...proof.extractedParameterValues };
+            }
+        }
+
+        console.log('📦 Extracted data:', JSON.stringify(extractedData, null, 2));
+
+        // Store the pending contribution for the frontend to pick up
+        const pendingKey = `pending_${walletAddress}_${provider}`;
+        global.pendingContributions = global.pendingContributions || {};
+        global.pendingContributions[pendingKey] = {
+            proofId,
+            data: extractedData,
+            dataType: dataType || `${provider}_data`,
+            provider,
+            walletAddress,
+            timestamp: Date.now()
+        };
+
+        console.log(`✅ Stored pending contribution: ${pendingKey}`);
+
+        res.json({ success: true, message: 'Proof received' });
+    } catch (error) {
+        console.error('❌ Reclaim callback error:', error);
+        res.status(500).json({ error: 'Failed to process proof' });
+    }
+});
+
+// Poll for pending contribution (used by frontend after returning from Reclaim)
+router.get('/reclaim/pending/:walletAddress/:provider', (req, res) => {
+    const { walletAddress, provider } = req.params;
+    const pendingKey = `pending_${walletAddress}_${provider}`;
+
+    console.log(`🔍 Checking pending contribution: ${pendingKey}`);
+
+    const pending = global.pendingContributions?.[pendingKey];
+
+    if (pending) {
+        // Remove after retrieval
+        delete global.pendingContributions[pendingKey];
+        console.log(`✅ Found and returned pending contribution`);
+        return res.json({ success: true, contribution: pending });
+    }
+
+    res.json({ success: false, message: 'No pending contribution found' });
+});
+
 // Middleware to verify wallet token (Farcaster wallet connect)
 // Token format: "wallet_0xADDRESS" or "privy_0xADDRESS_user"
 const verifyWalletToken = (req, res, next) => {
@@ -429,7 +542,7 @@ router.post('/contribute', verifyPrivyToken, async (req, res) => {
                         }
                     }
                 };
-                
+
                 // Update based on dataType
                 if (dataType === 'zomato_order_history') {
                     await sql`UPDATE zomato_contributions 

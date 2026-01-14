@@ -1,17 +1,25 @@
 // src/hooks/useReclaim.ts
-// Hook for Reclaim Protocol verification
+// Hook for Reclaim Protocol verification with callback URL approach for mini-apps
 
 import { useState, useCallback } from 'react';
 import { ReclaimProofRequest } from '@reclaimprotocol/js-sdk';
 import sdk from '@farcaster/miniapp-sdk';
+import { useWallet } from './useWallet';
 
 const RECLAIM_APP_ID = import.meta.env.VITE_RECLAIM_APP_ID;
 const RECLAIM_APP_SECRET = import.meta.env.VITE_RECLAIM_APP_SECRET;
 const ZOMATO_PROVIDER_ID = import.meta.env.VITE_ZOMATO_PROVIDER_ID;
 const GITHUB_PROVIDER_ID = import.meta.env.VITE_GITHUB_PROVIDER_ID;
 const NETFLIX_PROVIDER_ID = import.meta.env.VITE_NETFLIX_PROVIDER_ID;
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export type ProviderType = 'zomato' | 'github' | 'netflix';
+
+const DATA_TYPE_MAP: Record<ProviderType, string> = {
+    zomato: 'zomato_order_history',
+    github: 'github_profile',
+    netflix: 'netflix_watch_history'
+};
 
 export interface ReclaimResult {
     proofId: string;
@@ -21,6 +29,37 @@ export interface ReclaimResult {
 export const useReclaim = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { address } = useWallet();
+
+    // Poll backend for pending contribution after user returns from Reclaim
+    const pollForPendingContribution = useCallback(async (
+        walletAddress: string,
+        provider: ProviderType,
+        maxAttempts = 30,
+        intervalMs = 2000
+    ): Promise<ReclaimResult | null> => {
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                const response = await fetch(`${API_URL}/api/reclaim/pending/${walletAddress}/${provider}`);
+                const data = await response.json();
+
+                if (data.success && data.contribution) {
+                    console.log('✅ Found pending contribution:', data.contribution);
+                    return {
+                        proofId: data.contribution.proofId,
+                        data: data.contribution.data
+                    };
+                }
+            } catch (e) {
+                console.warn('Poll attempt failed:', e);
+            }
+
+            // Wait before next attempt
+            await new Promise(resolve => setTimeout(resolve, intervalMs));
+        }
+
+        return null;
+    }, []);
 
     const verify = useCallback(async (provider: ProviderType): Promise<ReclaimResult | null> => {
         setIsLoading(true);
@@ -37,119 +76,52 @@ export const useReclaim = () => {
                 throw new Error('Reclaim not configured');
             }
 
+            if (!address) {
+                throw new Error('Wallet not connected');
+            }
+
             const request = await ReclaimProofRequest.init(
                 RECLAIM_APP_ID,
                 RECLAIM_APP_SECRET,
                 providerId
             );
 
-            const url = await request.getRequestUrl();
+            // Set callback URL to our backend webhook
+            const callbackUrl = `${API_URL}/api/reclaim/callback`;
+            request.setAppCallbackUrl(callbackUrl);
 
-            // Use Farcaster SDK to open external URL in mini-app context
+            // Add context so backend knows which user/provider this is for
+            const contextData = JSON.stringify({
+                walletAddress: address,
+                provider,
+                dataType: DATA_TYPE_MAP[provider]
+            });
+            request.addContext('sessionData', contextData);
+
+            const url = await request.getRequestUrl();
+            console.log('📋 Reclaim URL generated:', url);
+            console.log('📋 Callback URL:', callbackUrl);
+
+            // Open Reclaim verification using Farcaster SDK
             sdk.actions.openUrl(url);
 
-            return new Promise((resolve, reject) => {
-                request.startSession({
-                    onSuccess: (proofs) => {
-                        console.log('✅ Reclaim verification successful');
-                        console.log('📦 Raw proofs (full):', proofs);
+            // Poll for the proof to arrive at our backend
+            console.log('⏳ Waiting for Reclaim callback...');
+            const result = await pollForPendingContribution(address, provider);
 
-                        try {
-                            // Handle both array and single proof
-                            const proof = Array.isArray(proofs) ? proofs[0] : proofs;
-                            let extractedData: Record<string, unknown> = {};
-                            let proofId = `proof_${Date.now()}`;
-
-                            if (typeof proof === 'object' && proof !== null) {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const p = proof as any;
-
-                                console.log('📋 Proof keys:', Object.keys(p));
-                                proofId = p.identifier || proofId;
-
-                                // 1. Try claimData.context (primary location)
-                                if (p.claimData?.context) {
-                                    console.log('📋 Raw claimData.context:', p.claimData.context);
-                                    try {
-                                        const ctx = typeof p.claimData.context === 'string'
-                                            ? JSON.parse(p.claimData.context)
-                                            : p.claimData.context;
-                                        console.log('📋 Parsed context:', ctx);
-
-                                        if (ctx.extractedParameters) {
-                                            extractedData = { ...extractedData, ...ctx.extractedParameters };
-                                            console.log('✅ Found extractedParameters:', ctx.extractedParameters);
-                                        }
-
-                                        // Some providers put data directly in context
-                                        if (ctx.providerData) {
-                                            extractedData = { ...extractedData, ...ctx.providerData };
-                                        }
-                                    } catch (e) {
-                                        console.warn('Could not parse context:', e);
-                                    }
-                                }
-
-                                // 2. Try claimData.parameters
-                                if (p.claimData?.parameters) {
-                                    console.log('📋 Raw parameters:', p.claimData.parameters);
-                                    try {
-                                        const params = typeof p.claimData.parameters === 'string'
-                                            ? JSON.parse(p.claimData.parameters)
-                                            : p.claimData.parameters;
-
-                                        // Check for responseMatches
-                                        if (params.responseMatches) {
-                                            console.log('📋 Found responseMatches:', params.responseMatches);
-                                        }
-                                    } catch (e) {
-                                        console.warn('Could not parse parameters:', e);
-                                    }
-                                }
-
-                                // 3. Try extractedParameterValues (some SDK versions)
-                                if (p.extractedParameterValues) {
-                                    console.log('✅ Found extractedParameterValues:', p.extractedParameterValues);
-                                    extractedData = { ...extractedData, ...p.extractedParameterValues };
-                                }
-
-                                // 4. Try publicData (some providers use this)
-                                if (p.publicData) {
-                                    console.log('✅ Found publicData:', p.publicData);
-                                    extractedData = { ...extractedData, ...p.publicData };
-                                }
-
-                                // 5. Fallback: include raw claimData for debugging
-                                if (Object.keys(extractedData).length === 0) {
-                                    console.log('⚠️ No extracted data found, including raw claimData');
-                                    extractedData = { rawClaimData: p.claimData };
-                                }
-                            }
-
-                            console.log('📦 FINAL extracted data:', JSON.stringify(extractedData, null, 2));
-                            setIsLoading(false);
-                            resolve({ proofId, data: extractedData });
-                        } catch (parseError) {
-                            console.error('Error parsing proofs:', parseError);
-                            setIsLoading(false);
-                            resolve({ proofId: `proof_${Date.now()}`, data: { parseError: String(parseError) } });
-                        }
-                    },
-                    onError: (err) => {
-                        console.error('❌ Reclaim verification error:', err);
-                        setError(err?.message || 'Verification failed');
-                        setIsLoading(false);
-                        reject(err);
-                    },
-                });
-            });
+            if (result) {
+                setIsLoading(false);
+                return result;
+            } else {
+                throw new Error('Verification timed out. Please try again.');
+            }
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Verification failed';
             setError(msg);
             setIsLoading(false);
             return null;
         }
-    }, []);
+    }, [address, pollForPendingContribution]);
 
     return { verify, isLoading, error };
 };
