@@ -1,7 +1,7 @@
 // src/hooks/useReclaim.ts
-// Hook for Reclaim Protocol verification with callback URL approach for mini-apps
+// Hook for Reclaim Protocol verification with localStorage persistence for mini-apps
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ReclaimProofRequest } from '@reclaimprotocol/js-sdk';
 import sdk from '@farcaster/miniapp-sdk';
 import { useWallet } from './useWallet';
@@ -11,7 +11,12 @@ const RECLAIM_APP_SECRET = import.meta.env.VITE_RECLAIM_APP_SECRET;
 const ZOMATO_PROVIDER_ID = import.meta.env.VITE_ZOMATO_PROVIDER_ID;
 const GITHUB_PROVIDER_ID = import.meta.env.VITE_GITHUB_PROVIDER_ID;
 const NETFLIX_PROVIDER_ID = import.meta.env.VITE_NETFLIX_PROVIDER_ID;
-const API_URL = import.meta.env.VITE_API_URL || '';
+
+// Auto-detect API URL: use env var in dev, or current origin in production
+const API_URL = import.meta.env.VITE_API_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : '');
+
+const PENDING_KEY = 'myrad_pending_verification';
 
 export type ProviderType = 'zomato' | 'github' | 'netflix';
 
@@ -24,10 +29,12 @@ const DATA_TYPE_MAP: Record<ProviderType, string> = {
 export interface ReclaimResult {
     proofId: string;
     data: Record<string, unknown>;
+    dataType?: string;
 }
 
 export interface PendingVerification {
     provider: ProviderType;
+    walletAddress: string;
     startedAt: number;
 }
 
@@ -37,6 +44,7 @@ export const checkPendingContribution = async (
     provider: ProviderType
 ): Promise<ReclaimResult | null> => {
     try {
+        console.log(`🔍 Checking pending contribution for ${walletAddress}/${provider}`);
         const response = await fetch(`${API_URL}/api/reclaim/pending/${walletAddress}/${provider}`);
         const data = await response.json();
 
@@ -44,65 +52,57 @@ export const checkPendingContribution = async (
             console.log('✅ Found pending contribution:', data.contribution);
             return {
                 proofId: data.contribution.proofId,
-                data: data.contribution.data
+                data: data.contribution.data,
+                dataType: data.contribution.dataType
             };
         }
+        console.log('❌ No pending contribution found');
     } catch (e) {
         console.warn('Check pending failed:', e);
     }
     return null;
 };
 
+// Get pending verification from localStorage
+export const getPendingVerification = (): PendingVerification | null => {
+    try {
+        const stored = localStorage.getItem(PENDING_KEY);
+        if (stored) {
+            const pending = JSON.parse(stored) as PendingVerification;
+            // Check if not expired (10 minutes max)
+            if (Date.now() - pending.startedAt < 10 * 60 * 1000) {
+                return pending;
+            }
+            // Expired, clear it
+            localStorage.removeItem(PENDING_KEY);
+        }
+    } catch (e) {
+        console.warn('Error reading pending verification:', e);
+    }
+    return null;
+};
+
+// Clear pending verification
+export const clearPendingVerification = () => {
+    localStorage.removeItem(PENDING_KEY);
+};
+
 export const useReclaim = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [pendingVerification, setPendingVerification] = useState<PendingVerification | null>(null);
     const { address } = useWallet();
-    const callbackRef = useRef<((result: ReclaimResult | null) => void) | null>(null);
 
-    // Listen for visibility changes to check for completed verifications
+    // Check for pending verification on mount
     useEffect(() => {
-        const handleVisibilityChange = async () => {
-            if (document.visibilityState === 'visible' && pendingVerification && address) {
-                console.log('📱 App became visible, checking for pending contribution...');
+        const pending = getPendingVerification();
+        if (pending) {
+            console.log('📋 Found pending verification in localStorage:', pending);
+            setIsLoading(true);
+        }
+    }, []);
 
-                // Small delay to ensure backend has processed
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                const result = await checkPendingContribution(address, pendingVerification.provider);
-
-                if (result && callbackRef.current) {
-                    console.log('✅ Found result after visibility change');
-                    callbackRef.current(result);
-                    setPendingVerification(null);
-                    callbackRef.current = null;
-                }
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        // Also check periodically while visible (for cases where visibility event isn't fired)
-        const interval = setInterval(async () => {
-            if (document.visibilityState === 'visible' && pendingVerification && address) {
-                const result = await checkPendingContribution(address, pendingVerification.provider);
-                if (result && callbackRef.current) {
-                    console.log('✅ Found result during polling');
-                    callbackRef.current(result);
-                    setPendingVerification(null);
-                    callbackRef.current = null;
-                    setIsLoading(false);
-                }
-            }
-        }, 3000);
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            clearInterval(interval);
-        };
-    }, [pendingVerification, address]);
-
-    const verify = useCallback(async (provider: ProviderType): Promise<ReclaimResult | null> => {
+    // Start verification process (opens external URL)
+    const startVerification = useCallback(async (provider: ProviderType): Promise<boolean> => {
         setIsLoading(true);
         setError(null);
 
@@ -142,55 +142,62 @@ export const useReclaim = () => {
             const url = await request.getRequestUrl();
             console.log('📋 Reclaim URL generated:', url);
 
-            // Store pending verification state
-            setPendingVerification({ provider, startedAt: Date.now() });
+            // Store pending verification in localStorage BEFORE navigating away
+            const pending: PendingVerification = {
+                provider,
+                walletAddress: address,
+                startedAt: Date.now()
+            };
+            localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+            console.log('💾 Stored pending verification in localStorage');
 
-            // Return a promise that will be resolved when visibility changes detect the result
-            return new Promise((resolve) => {
-                callbackRef.current = (result) => {
-                    setIsLoading(false);
-                    resolve(result);
-                };
+            // Open Reclaim verification using Farcaster SDK
+            // This will navigate away from the app
+            sdk.actions.openUrl(url);
 
-                // Open Reclaim verification using Farcaster SDK
-                // This will navigate away from the app
-                sdk.actions.openUrl(url);
-
-                // Set a timeout to resolve with null if no result after 3 minutes
-                setTimeout(() => {
-                    if (callbackRef.current) {
-                        console.log('⏰ Verification timed out');
-                        setError('Verification timed out. Please try again.');
-                        setIsLoading(false);
-                        setPendingVerification(null);
-                        callbackRef.current = null;
-                        resolve(null);
-                    }
-                }, 180000); // 3 minutes
-            });
+            return true;
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Verification failed';
             setError(msg);
             setIsLoading(false);
-            return null;
+            return false;
         }
     }, [address]);
 
+    // Check if there's a completed verification waiting
+    const checkForResult = useCallback(async (): Promise<ReclaimResult | null> => {
+        const pending = getPendingVerification();
+        if (!pending) {
+            setIsLoading(false);
+            return null;
+        }
+
+        console.log('🔍 Checking for verification result...');
+        const result = await checkPendingContribution(pending.walletAddress, pending.provider);
+
+        if (result) {
+            // Clear pending since we got a result
+            clearPendingVerification();
+            setIsLoading(false);
+            return result;
+        }
+
+        return null;
+    }, []);
+
     const cancelVerification = useCallback(() => {
-        setPendingVerification(null);
-        callbackRef.current = null;
+        clearPendingVerification();
         setIsLoading(false);
         setError(null);
     }, []);
 
     return {
-        verify,
+        startVerification,
+        checkForResult,
+        cancelVerification,
         isLoading,
         error,
-        pendingVerification,
-        cancelVerification,
-        checkPendingContribution: address
-            ? (provider: ProviderType) => checkPendingContribution(address, provider)
-            : null
+        hasPendingVerification: !!getPendingVerification(),
+        getPendingVerification
     };
 };

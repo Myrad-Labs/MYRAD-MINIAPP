@@ -57,7 +57,13 @@ type ProviderPoints = {
 
 export function ProviderGrid() {
   const { address } = useWallet();
-  const { verify, isLoading } = useReclaim();
+  const {
+    startVerification,
+    checkForResult,
+    cancelVerification,
+    isLoading,
+    getPendingVerification
+  } = useReclaim();
 
   const [totalPoints, setTotalPoints] = useState(0);
   const [providerPoints, setProviderPoints] = useState<ProviderPoints>({});
@@ -77,52 +83,100 @@ export function ProviderGrid() {
     }
   }, [address]);
 
+  // Check for pending verification results on mount and focus
+  useEffect(() => {
+    const checkPending = async () => {
+      const pending = getPendingVerification();
+      if (!pending || !address) return;
+
+      console.log('📋 Found pending verification, checking for result...');
+
+      // Find the provider
+      const provider = providers.find(p => p.id === pending.provider);
+      if (!provider) return;
+
+      // Show the modal in submitting state
+      setModal({ provider, step: "submitting", points: 0, error: null });
+
+      const result = await checkForResult();
+
+      if (result) {
+        console.log('✅ Found completed verification result');
+        try {
+          const response = await submitContribution(address, {
+            anonymizedData: result.data,
+            dataType: provider.dataType,
+            reclaimProofId: result.proofId,
+          });
+
+          const earned = response.contribution.pointsAwarded;
+
+          setModal((prev) => ({
+            ...prev,
+            step: "success",
+            points: earned,
+          }));
+
+          setTotalPoints((prev) => prev + earned);
+          setProviderPoints((prev) => ({
+            ...prev,
+            [provider.id]: (prev[provider.id] || 0) + earned,
+          }));
+        } catch (err) {
+          setModal((prev) => ({
+            ...prev,
+            step: "error",
+            error: err instanceof Error ? err.message : "Submission failed",
+          }));
+        }
+      } else {
+        // No result yet, keep polling
+        console.log('⏳ No result yet, will keep checking...');
+      }
+    };
+
+    // Check immediately on mount
+    checkPending();
+
+    // Also check on visibility change (when user returns to app)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setTimeout(checkPending, 1000); // Small delay
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Poll every 3 seconds while component is mounted
+    const interval = setInterval(checkPending, 3000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [address, checkForResult, getPendingVerification]);
+
   const handleProviderClick = async (provider: Provider) => {
     if (!address) return;
 
     setModal({ provider, step: "verifying", points: 0, error: null });
 
-    try {
-      // Step 1: Reclaim verification
-      const result = await verify(provider.id);
-      if (!result) throw new Error("Verification cancelled or failed");
+    // Start verification - this opens the external URL
+    const started = await startVerification(provider.id);
 
-      // Step 2: Submit to backend
-      setModal((prev) => ({ ...prev, step: "submitting" }));
-
-      const response = await submitContribution(address, {
-        anonymizedData: result.data,
-        dataType: provider.dataType,
-        reclaimProofId: result.proofId,
-      });
-
-      const earned = response.contribution.pointsAwarded;
-
-      // Success modal
-      setModal((prev) => ({
-        ...prev,
-        step: "success",
-        points: earned,
-      }));
-
-      // Update total points
-      setTotalPoints((prev) => prev + earned);
-
-      // Update provider-specific points
-      setProviderPoints((prev) => ({
-        ...prev,
-        [provider.id]: (prev[provider.id] || 0) + earned,
-      }));
-    } catch (err) {
+    if (!started) {
       setModal((prev) => ({
         ...prev,
         step: "error",
-        error: err instanceof Error ? err.message : "Something went wrong",
+        error: "Failed to start verification",
       }));
     }
+    // After starting, the user will navigate away
+    // The useEffect above will handle checking for results when they return
   };
 
   const closeModal = () => {
+    cancelVerification();
     setModal({ provider: null, step: "idle", points: 0, error: null });
   };
 
