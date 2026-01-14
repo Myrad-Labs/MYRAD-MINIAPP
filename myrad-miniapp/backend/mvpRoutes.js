@@ -37,6 +37,25 @@ router.post('/reclaim/callback', async (req, res) => {
         // Format 2: { proof: {...}, context: "..." }  
         // Format 3: URL-encoded proof string
         // Format 4: Direct proof object at root level
+        // Format 5: Fallback raw body from server.js middleware
+
+        // Handle fallback raw body from server.js middleware
+        if (req.body.raw && typeof req.body.raw === 'string') {
+            try {
+                req.body = JSON.parse(req.body.raw);
+                console.log('📋 Format: parsed from raw buffer fallback');
+            } catch (e) {
+                console.log('⚠️ Could not parse raw buffer as JSON');
+            }
+        }
+        if (req.body.rawString && typeof req.body.rawString === 'string') {
+            try {
+                req.body = JSON.parse(req.body.rawString);
+                console.log('📋 Format: parsed from rawString fallback');
+            } catch (e) {
+                console.log('⚠️ Could not parse rawString as JSON');
+            }
+        }
 
         if (req.body.proofs && Array.isArray(req.body.proofs) && req.body.proofs.length > 0) {
             proofData = req.body.proofs[0];
@@ -116,8 +135,49 @@ router.post('/reclaim/callback', async (req, res) => {
                 }
             }
 
+            // Extract from extractedParameterValues (most common Reclaim format)
             if (proofData.extractedParameterValues) {
                 extractedData = { ...extractedData, ...proofData.extractedParameterValues };
+            }
+
+            // For Zomato: check if there's an 'orders' field that might be a JSON string
+            if (extractedData.orders && typeof extractedData.orders === 'string') {
+                try {
+                    extractedData.orders = JSON.parse(extractedData.orders);
+                    console.log('📋 Parsed Zomato orders from JSON string');
+                } catch (e) {
+                    console.log('⚠️ Could not parse orders string as JSON');
+                }
+            }
+
+            // For Zomato: check for orderHistory field
+            if (extractedData.orderHistory && typeof extractedData.orderHistory === 'string') {
+                try {
+                    extractedData.orderHistory = JSON.parse(extractedData.orderHistory);
+                    extractedData.orders = extractedData.orderHistory; // Normalize to 'orders'
+                    console.log('📋 Parsed Zomato orderHistory from JSON string');
+                } catch (e) {
+                    console.log('⚠️ Could not parse orderHistory string as JSON');
+                }
+            }
+
+            // Check for responseBody in claimData (contains raw API response)
+            if (proofData.claimData?.responseBody) {
+                try {
+                    const responseBody = typeof proofData.claimData.responseBody === 'string'
+                        ? JSON.parse(proofData.claimData.responseBody)
+                        : proofData.claimData.responseBody;
+
+                    // Zomato order history might be in responseBody
+                    if (responseBody.orders && !extractedData.orders) {
+                        extractedData.orders = responseBody.orders;
+                        console.log('📋 Extracted orders from claimData.responseBody');
+                    }
+                    // Store the full response for debugging
+                    extractedData._rawResponse = responseBody;
+                } catch (e) {
+                    console.log('⚠️ Could not parse claimData.responseBody');
+                }
             }
 
             // Fallback: store raw proof data
@@ -126,7 +186,8 @@ router.post('/reclaim/callback', async (req, res) => {
             }
         }
 
-        console.log('📦 Extracted data:', JSON.stringify(extractedData, null, 2));
+        console.log('📦 Extracted data keys:', Object.keys(extractedData));
+        console.log('📦 Extracted data (truncated):', JSON.stringify(extractedData, null, 2).substring(0, 2000));
 
         // Store pending contribution even without wallet (will match by provider)
         const pendingKey = walletAddress
