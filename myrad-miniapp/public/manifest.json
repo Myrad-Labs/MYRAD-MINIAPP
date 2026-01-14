@@ -13,8 +13,8 @@
         "primaryCategory": "utility"
     },
     "accountAssociation": {
-        "header": "",
-        "payload": "",
-        "signature": ""
+        "header": "eyJmaWQiOjE0ODQ2MTYsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgxNTIzNzhEODI0MjAxQTQ4NmMzRkJhNEVGRTA1Q2MwMTQ0OUZlODFlIn0",
+        "payload": "eyJkb21haW4iOiJteXJhZC1taW5pYXBwLm9ucmVuZGVyLmNvbSJ9",
+        "signature": "+++4M9iul/cDgwt/4OxzT+d7vJYTZmavM7eeumin/+ACP6O5hS+bPJggtP+QPh5pvSXFJTWq4YANGN3oOUljORw="
     }
 }
