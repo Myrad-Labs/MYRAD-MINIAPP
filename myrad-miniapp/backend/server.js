@@ -37,6 +37,11 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Farcaster Manifest Redirect
+app.get("/.well-known/farcaster.json", (req, res) => {
+  res.redirect(307, "https://api.farcaster.xyz/miniapps/hosted-manifest/019bbc07-6843-50c5-932a-369082242f03");
+});
+
 // MVP API Routes
 app.use("/api", mvpRoutes);
 

@@ -1,0 +1,20 @@
+{
+    "frame": {
+        "name": "Myrad Test",
+        "version": "1",
+        "iconUrl": "https://myrad-miniapp.onrender.com/icon.png",
+        "homeUrl": "https://myrad-miniapp.onrender.com",
+        "imageUrl": "https://myrad-miniapp.onrender.com/image.png",
+        "splashImageUrl": "https://myrad-miniapp.onrender.com/splash.png",
+        "splashBackgroundColor": "#FFFFFF",
+        "webhookUrl": "https://myrad-miniapp.onrender.com/api/webhook",
+        "subtitle": "Test",
+        "description": "Test",
+        "primaryCategory": "utility"
+    },
+    "accountAssociation": {
+        "header": "",
+        "payload": "",
+        "signature": ""
+    }
+}
