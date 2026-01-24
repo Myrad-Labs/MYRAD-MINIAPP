@@ -6,6 +6,7 @@ import { sql } from './dbConfig.js';
 import * as cohortService from './cohortService.js';
 import * as consentLedger from './consentLedger.js';
 import * as rewardService from './rewardService.js';
+const { getAllUsers } = await import('./userService.js');
 
 
 const router = express.Router();
@@ -216,6 +217,38 @@ router.post('/reclaim/callback', async (req, res) => {
         res.status(500).json({ error: 'Failed to process proof', details: error.message });
     }
 });
+
+router.get("/leaderboard", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 100;
+
+    const { getAllUsers } = await import("./userService.js");
+    const users = await getAllUsers(limit);
+
+    // ✅ PUBLIC-SAFE SHAPE
+    const leaderboard = users.map((u) => ({
+      id: u.id, // internal use only (React key)
+      username: u.username || `User ${String(u.id).slice(-4)}`,
+      walletAddress: u.walletAddress || null,
+      totalPoints: Number(u.totalPoints) || 0,
+      league: u.league || "Bronze"
+    }));
+
+    res.json({
+      success: true,
+      timeframe: "all_time",
+      count: leaderboard.length,
+      leaderboard
+    });
+  } catch (error) {
+    console.error("Leaderboard error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch leaderboard"
+    });
+  }
+});
+
 
 // Poll for pending contribution (used by frontend after returning from Reclaim)
 router.get('/reclaim/pending/:walletAddress/:provider', (req, res) => {

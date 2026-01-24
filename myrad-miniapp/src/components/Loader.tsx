@@ -21,7 +21,7 @@ export function Loader() {
           {/* Logo Container */}
           <div className="relative bg-white/50 backdrop-blur-sm p-6 rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/80 ring-1 ring-white/50">
             <img
-              src="/testlogo.png"
+              src="/logo.jpg"
               alt="MYRAD"
               className="w-12 h-12 object-contain mix-blend-multiply grayscale opacity-90"
             />
